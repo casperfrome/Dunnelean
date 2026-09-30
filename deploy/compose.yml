@@ -1,0 +1,90 @@
+name: dunnelean
+x-common: &common
+  restart: unless-stopped
+  stop_grace_period: 120s
+  ulimits:
+    nofile: {soft: 1000000, hard: 1000000}
+  logging:
+    driver: json-file
+    options: {max-size: "20m", max-file: "3"}
+services:
+  fe:
+    <<: *common
+    image: apache/doris:fe-4.1.4@sha256:3cbfc9b6293057a0b7f10c2e597f20f4a6bafed0729dfa9795db21eae2e136bb
+    mem_limit: 3g
+    cpus: 2
+    entrypoint: [bash, /dunnelean/configure.sh, fe]
+    environment:
+      FE_SERVERS: fe1:172.30.41.2:9010
+      FE_ID: "1"
+    ports: ["127.0.0.1:9030:9030", "127.0.0.1:8030:8030", "127.0.0.1:8070:8070"]
+    volumes:
+      - fe-meta:/opt/apache-doris/fe/doris-meta
+      - fe-conf:/opt/apache-doris/fe/conf
+      - fe-log:/opt/apache-doris/fe/log
+      - ./configure.sh:/dunnelean/configure.sh:ro
+    networks:
+      doris: {ipv4_address: 172.30.41.2}
+    healthcheck:
+      test: [CMD-SHELL, "mysql -h127.0.0.1 -P9030 -uroot -N -e 'SHOW FRONTENDS' | grep -w true >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+  be:
+    <<: *common
+    image: apache/doris:be-4.1.4@sha256:08c139f3d0ec45090a5214fd76f19f84b871d05f1a2db83b5e35a85c193617b2
+    mem_limit: 6g
+    cpus: 4
+    entrypoint: [bash, /dunnelean/configure.sh, be]
+    environment:
+      FE_SERVERS: fe1:172.30.41.2:9010
+      BE_ADDR: 172.30.41.3:9050
+    depends_on:
+      fe: {condition: service_healthy}
+    ports: ["127.0.0.1:8040:8040", "127.0.0.1:8050:8050"]
+    volumes:
+      - be-data:/opt/apache-doris/be/storage
+      - be-conf:/opt/apache-doris/be/conf
+      - be-log:/opt/apache-doris/be/log
+      - ./configure.sh:/dunnelean/configure.sh:ro
+    networks:
+      doris: {ipv4_address: 172.30.41.3}
+    healthcheck:
+      test: [CMD-SHELL, "mysql -h172.30.41.2 -P9030 -uroot -N -e 'SHOW BACKENDS' | grep '172.30.41.3' | grep -w true >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+  mysql-test:
+    <<: *common
+    image: mysql:9.7.2
+    profiles: [test]
+    mem_limit: 768m
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_TEST_ROOT_PASSWORD:?Run scripts/start-env.ps1 first}
+      MYSQL_DATABASE: dunnelean_test
+      MYSQL_USER: dunnelean
+      MYSQL_PASSWORD: ${DUNNELEAN_TEST_PASSWORD:?Run scripts/start-env.ps1 first}
+    command: ["--max-allowed-packet=67108864", "--innodb-buffer-pool-size=134217728"]
+    ports: ["127.0.0.1:3308:3306"]
+    volumes: [mysql-test-data:/var/lib/mysql]
+    networks:
+      doris: {ipv4_address: 172.30.41.4}
+    healthcheck:
+      test: [CMD-SHELL, "MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysql -uroot -e 'SELECT 1' >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+volumes:
+  fe-meta:
+  fe-conf:
+  fe-log:
+  be-data:
+  be-conf:
+  be-log:
+  mysql-test-data:
+networks:
+  doris:
+    ipam:
+      config: [{subnet: 172.30.41.0/24}]

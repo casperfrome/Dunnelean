@@ -1,0 +1,119 @@
+[
+  {
+    "case": "mysql_to_doris_exact_types",
+    "state": "SUCCEEDED",
+    "rows": 47,
+    "seconds": 0.625,
+    "peak_rss_mib": 14.1,
+    "run_id": "7eaabd39-e6ce-4cf5-9094-b06e4234d094"
+  },
+  {
+    "case": "doris_to_mysql_exact_types",
+    "state": "SUCCEEDED",
+    "rows": 47,
+    "seconds": 0.313,
+    "peak_rss_mib": 15.6,
+    "run_id": "8b5f25f3-06b3-4908-835f-7a4c6738516a"
+  },
+  {
+    "case": "mysql_upsert_counts",
+    "state": "SUCCEEDED",
+    "rows": 47,
+    "seconds": 0.157,
+    "peak_rss_mib": 15.6,
+    "run_id": "fdf53d05-ad8e-41b0-803a-81e2f4f113ec"
+  },
+  {
+    "case": "empty_result",
+    "state": "SUCCEEDED",
+    "rows": 0,
+    "seconds": 0.156,
+    "peak_rss_mib": 15.8,
+    "run_id": "2936afc4-bb46-4eb5-8aa3-ed712f45a714"
+  },
+  {
+    "case": "mapping_filter_hooks",
+    "state": "SUCCEEDED",
+    "rows": 10,
+    "seconds": 0.344,
+    "peak_rss_mib": 15.9,
+    "run_id": "d729c0bf-0bb5-4100-8940-f444877b79b1"
+  },
+  {
+    "case": "parallel_range_split_tails",
+    "state": "SUCCEEDED",
+    "rows": 47,
+    "seconds": 0.312,
+    "peak_rss_mib": 16.0,
+    "run_id": "8bd47439-91b4-4110-99a1-0171a6e71721"
+  },
+  {
+    "case": "cancel_rate_limited_run",
+    "state": "CANCELLED",
+    "rows": 0
+  },
+  {
+    "case": "redacted_inline_credential",
+    "state": "SUCCEEDED",
+    "rows": 0,
+    "seconds": 0.172,
+    "peak_rss_mib": 16.0,
+    "run_id": "8c134cbb-3e93-4f52-bed8-5509dcb37146"
+  },
+  {
+    "case": "doris_upsert_largeint_boolean",
+    "state": "SUCCEEDED",
+    "rows": 2,
+    "seconds": 0.172,
+    "peak_rss_mib": 16.1,
+    "run_id": "94098a9d-01c4-4d2a-90b7-4be0f3902df8"
+  },
+  {
+    "case": "doris_upsert_repeat",
+    "state": "SUCCEEDED",
+    "rows": 2,
+    "seconds": 0.172,
+    "peak_rss_mib": 16.1,
+    "run_id": "05e63181-a467-4f9a-b535-ba15f8fda326"
+  },
+  {
+    "case": "largeint_boolean_roundtrip",
+    "state": "SUCCEEDED",
+    "rows": 2,
+    "seconds": 0.156,
+    "peak_rss_mib": 16.2,
+    "run_id": "73552187-40e2-4289-a853-765f749ac231"
+  },
+  {
+    "case": "post_sql_failure_preserves_commits",
+    "state": "FAILED",
+    "rows": 3,
+    "seconds": 0.172,
+    "peak_rss_mib": 16.2,
+    "run_id": "36b2d9c9-8655-4f43-81b2-2273f280015b"
+  },
+  {
+    "case": "mysql_commit_response_loss",
+    "state": "FAILED",
+    "rows": 0,
+    "seconds": 0.156,
+    "peak_rss_mib": 16.2,
+    "run_id": "66aa83cb-ed4f-4c0f-ad26-2434e75e0a2f"
+  },
+  {
+    "case": "scale_1000000_mysql_to_doris",
+    "state": "SUCCEEDED",
+    "rows": 1000000,
+    "seconds": 4.453,
+    "peak_rss_mib": 21.2,
+    "run_id": "0ed79bf2-eae1-45ef-83a0-02684e0fbc50"
+  },
+  {
+    "case": "scale_1000000_doris_to_mysql",
+    "state": "SUCCEEDED",
+    "rows": 1000000,
+    "seconds": 7.719,
+    "peak_rss_mib": 61.5,
+    "run_id": "f84151ec-2281-41ab-9c93-4b089762c038"
+  }
+]

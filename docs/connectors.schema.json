@@ -1,0 +1,902 @@
+{
+  "connectors": [
+    {
+      "reader": {
+        "consistency": [
+          "snapshot",
+          "statement"
+        ],
+        "protocol": "binary prepared streaming",
+        "range_split": "integer only; includes NULL and both tails"
+      },
+      "type": "mysql",
+      "writer": {
+        "modes": [
+          "insert",
+          "upsert"
+        ],
+        "transaction": "one InnoDB transaction per batch"
+      }
+    },
+    {
+      "reader": {
+        "experimental": true,
+        "prepared_parameters": false,
+        "protocol": "Arrow Flight SQL"
+      },
+      "type": "doris",
+      "version": "4.1.4",
+      "writer": {
+        "models": [
+          "DUPLICATE KEY",
+          "UNIQUE KEY merge-on-write"
+        ],
+        "modes": [
+          "append",
+          "upsert"
+        ],
+        "protocol": "Arrow IPC Stream Load"
+      }
+    }
+  ],
+  "limits": {
+    "memory": "split between reader buffers and queued conversion/encoding buffers; not an OS RSS cap",
+    "ordering": "parallel readers/writers do not guarantee row order",
+    "resume": false,
+    "schema_conversion": "only exact scalar conversions; unsupported types require explicit source SQL",
+    "time_zone": "fixed ±HH:MM, default +00:00",
+    "unknown_fields": "rejected"
+  },
+  "request_schema": {
+    "$defs": {
+      "Batch": {
+        "additionalProperties": false,
+        "properties": {
+          "bytes": {
+            "default": 16777216,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "rows": {
+            "default": 10000,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "Consistency": {
+        "enum": [
+          "snapshot",
+          "statement"
+        ],
+        "type": "string"
+      },
+      "Credentials": {
+        "additionalProperties": false,
+        "properties": {
+          "password": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "password_env": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "type": "object"
+      },
+      "DorisWriteMode": {
+        "enum": [
+          "append",
+          "upsert"
+        ],
+        "type": "string"
+      },
+      "Execution": {
+        "additionalProperties": false,
+        "properties": {
+          "bytes_per_second": {
+            "default": null,
+            "format": "uint64",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max_row_bytes": {
+            "default": 25165824,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "memory_bytes": {
+            "default": 268435456,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "queue_capacity": {
+            "default": 4,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "rows_per_second": {
+            "default": null,
+            "format": "uint64",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "timeout_ms": {
+            "default": 3600000,
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "Mapping": {
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "target"
+        ],
+        "type": "object"
+      },
+      "MysqlConnection": {
+        "additionalProperties": false,
+        "properties": {
+          "charset": {
+            "default": "utf8mb4",
+            "type": "string"
+          },
+          "credentials": {
+            "$ref": "#/$defs/Credentials"
+          },
+          "database": {
+            "type": "string"
+          },
+          "host": {
+            "default": "127.0.0.1",
+            "type": "string"
+          },
+          "max_allowed_packet_bytes": {
+            "default": 67108864,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "port": {
+            "default": 3306,
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "session_variables": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {},
+            "type": "object"
+          },
+          "time_zone": {
+            "default": "+00:00",
+            "type": "string"
+          },
+          "timeouts": {
+            "$ref": "#/$defs/Timeouts",
+            "default": {
+              "connect_ms": 10000,
+              "read_ms": 60000,
+              "write_ms": 120000
+            }
+          },
+          "tls": {
+            "$ref": "#/$defs/Tls",
+            "default": {
+              "ca_certificate": null,
+              "client_certificate": null,
+              "client_key": null,
+              "enabled": false,
+              "server_name": null
+            }
+          }
+        },
+        "required": [
+          "database",
+          "credentials"
+        ],
+        "type": "object"
+      },
+      "MysqlWriteMode": {
+        "enum": [
+          "insert",
+          "upsert"
+        ],
+        "type": "string"
+      },
+      "Parameter": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "null",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "string",
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "i64",
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "u64",
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "decimal",
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "f64",
+                "type": "string"
+              },
+              "value": {
+                "format": "double",
+                "type": "number"
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "bool",
+                "type": "string"
+              },
+              "value": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "binary",
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "ReaderConfig": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "batch": {
+                "$ref": "#/$defs/Batch",
+                "default": {
+                  "bytes": 16777216,
+                  "rows": 10000
+                }
+              },
+              "connection": {
+                "$ref": "#/$defs/MysqlConnection"
+              },
+              "consistency": {
+                "$ref": "#/$defs/Consistency",
+                "default": "snapshot"
+              },
+              "source": {
+                "$ref": "#/$defs/Source"
+              },
+              "split": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Split"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": {
+                "const": "mysql",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "connection",
+              "source"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "batch": {
+                "$ref": "#/$defs/Batch",
+                "default": {
+                  "bytes": 16777216,
+                  "rows": 10000
+                }
+              },
+              "credentials": {
+                "$ref": "#/$defs/Credentials"
+              },
+              "database": {
+                "type": "string"
+              },
+              "endpoint_map": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "default": {},
+                "type": "object"
+              },
+              "endpoint_parallelism": {
+                "default": 1,
+                "format": "uint",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "flight_uri": {
+                "type": "string"
+              },
+              "max_grpc_message_bytes": {
+                "default": 67108864,
+                "format": "uint",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "session_variables": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "default": {},
+                "type": "object"
+              },
+              "source": {
+                "$ref": "#/$defs/Source"
+              },
+              "timeouts": {
+                "$ref": "#/$defs/Timeouts",
+                "default": {
+                  "connect_ms": 10000,
+                  "read_ms": 60000,
+                  "write_ms": 120000
+                }
+              },
+              "tls": {
+                "$ref": "#/$defs/Tls",
+                "default": {
+                  "ca_certificate": null,
+                  "client_certificate": null,
+                  "client_key": null,
+                  "enabled": false,
+                  "server_name": null
+                }
+              },
+              "type": {
+                "const": "doris",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "flight_uri",
+              "database",
+              "credentials",
+              "source"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "Source": {
+        "additionalProperties": false,
+        "properties": {
+          "column_types": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {},
+            "description": "Optional expected Arrow types keyed by output column name; mismatches fail without coercion.",
+            "type": "object"
+          },
+          "columns": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "params": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/Parameter"
+            },
+            "type": "array"
+          },
+          "query": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "table": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "where": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "Split": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "type": "string"
+          },
+          "lower_bound": {
+            "description": "Integer boundaries are strings to preserve unsigned 64-bit values in Java/JSON.",
+            "type": "string"
+          },
+          "parallelism": {
+            "default": 1,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "partitions": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "upper_bound": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "column",
+          "lower_bound",
+          "upper_bound",
+          "partitions"
+        ],
+        "type": "object"
+      },
+      "Timeouts": {
+        "additionalProperties": false,
+        "properties": {
+          "connect_ms": {
+            "default": 10000,
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "read_ms": {
+            "default": 60000,
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "write_ms": {
+            "default": 120000,
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "Tls": {
+        "additionalProperties": false,
+        "properties": {
+          "ca_certificate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "client_certificate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "client_key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "enabled": {
+            "default": false,
+            "type": "boolean"
+          },
+          "server_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "WriterConfig": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "connection": {
+                "$ref": "#/$defs/MysqlConnection"
+              },
+              "key_columns": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "mode": {
+                "$ref": "#/$defs/MysqlWriteMode",
+                "default": "insert"
+              },
+              "options": {
+                "$ref": "#/$defs/WriterOptions",
+                "default": {
+                  "batch": {
+                    "bytes": 16777216,
+                    "rows": 10000
+                  },
+                  "parallelism": 1,
+                  "post_sql": [],
+                  "pre_sql": [],
+                  "retry_attempts": 2,
+                  "retry_backoff_ms": 250
+                }
+              },
+              "table": {
+                "type": "string"
+              },
+              "type": {
+                "const": "mysql",
+                "type": "string"
+              },
+              "update_columns": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "type",
+              "connection",
+              "table"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "be_http_urls": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "endpoint_map": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "default": {},
+                "type": "object"
+              },
+              "exec_mem_limit": {
+                "default": 2147483648,
+                "format": "uint64",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "fe_http_urls": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "headers": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "default": {},
+                "type": "object"
+              },
+              "http_tls": {
+                "$ref": "#/$defs/Tls",
+                "default": {
+                  "ca_certificate": null,
+                  "client_certificate": null,
+                  "client_key": null,
+                  "enabled": false,
+                  "server_name": null
+                }
+              },
+              "label_prefix": {
+                "default": "dunnelean",
+                "type": "string"
+              },
+              "load_timeout_seconds": {
+                "default": 120,
+                "format": "uint64",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "max_filter_ratio": {
+                "default": 0.0,
+                "format": "double",
+                "type": "number"
+              },
+              "mode": {
+                "$ref": "#/$defs/DorisWriteMode",
+                "default": "append"
+              },
+              "options": {
+                "$ref": "#/$defs/WriterOptions",
+                "default": {
+                  "batch": {
+                    "bytes": 16777216,
+                    "rows": 10000
+                  },
+                  "parallelism": 1,
+                  "post_sql": [],
+                  "pre_sql": [],
+                  "retry_attempts": 2,
+                  "retry_backoff_ms": 250
+                }
+              },
+              "partitions": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "sql": {
+                "$ref": "#/$defs/MysqlConnection"
+              },
+              "strict_mode": {
+                "default": true,
+                "type": "boolean"
+              },
+              "table": {
+                "type": "string"
+              },
+              "time_zone": {
+                "default": "+00:00",
+                "type": "string"
+              },
+              "type": {
+                "const": "doris",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "sql",
+              "fe_http_urls",
+              "table"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "WriterOptions": {
+        "additionalProperties": false,
+        "properties": {
+          "batch": {
+            "$ref": "#/$defs/Batch",
+            "default": {
+              "bytes": 16777216,
+              "rows": 10000
+            }
+          },
+          "parallelism": {
+            "default": 1,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "post_sql": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "pre_sql": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "retry_attempts": {
+            "default": 2,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "retry_backoff_ms": {
+            "default": 250,
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+      "execution": {
+        "$ref": "#/$defs/Execution",
+        "default": {
+          "bytes_per_second": null,
+          "max_row_bytes": 25165824,
+          "memory_bytes": 268435456,
+          "queue_capacity": 4,
+          "rows_per_second": null,
+          "timeout_ms": 3600000
+        }
+      },
+      "mapping": {
+        "default": [],
+        "items": {
+          "$ref": "#/$defs/Mapping"
+        },
+        "type": "array"
+      },
+      "reader": {
+        "$ref": "#/$defs/ReaderConfig"
+      },
+      "request_id": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "writer": {
+        "$ref": "#/$defs/WriterConfig"
+      }
+    },
+    "required": [
+      "reader",
+      "writer"
+    ],
+    "title": "RunSpec",
+    "type": "object"
+  }
+}

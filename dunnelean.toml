@@ -1,0 +1,5 @@
+listen = "127.0.0.1:9876"
+state_path = "var/dunnelean.sqlite"
+max_running = 2
+max_queued = 16
+shutdown_timeout_ms = 60000

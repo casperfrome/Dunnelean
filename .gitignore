@@ -1,0 +1,39 @@
+# Rust build artifacts and local runtime state
+/target/
+/var/
+
+# Local credentials; sanitized templates may be committed
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Java build artifacts
+*.class
+
+# Runtime files outside var/
+*.log
+*.pid
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+
+# Editor backups, temporary files and OS metadata
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini

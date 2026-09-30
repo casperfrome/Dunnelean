@@ -1,0 +1,41 @@
+[package]
+name = "dunnelean"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98"
+description = "Arrow-native MySQL and Doris offline batch synchronization service"
+license = "Apache-2.0"
+
+[dependencies]
+anyhow = "1"
+async-trait = "0.1"
+arrow = { version = "60", features = ["ipc"] }
+arrow-flight = { version = "60", features = ["flight-sql", "tls-ring"] }
+axum = "0.8"
+base64 = "0.22"
+bytes = "1"
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4", features = ["derive"] }
+futures = "0.3"
+mysql_async = { version = "0.37", default-features = false, features = ["minimal-rust", "rustls-tls", "ring"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }
+rusqlite = { version = "0.37", features = ["bundled"] }
+schemars = { version = "1", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+tokio = { version = "1", features = ["full"] }
+tokio-util = "0.7"
+toml = "0.9"
+tonic = { version = "0.14", features = ["transport", "tls-ring", "tls-native-roots"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+
+[dev-dependencies]
+tempfile = "3"
+tower = { version = "0.5", features = ["util"] }
+
+[profile.release]
+lto = "thin"
+strip = true

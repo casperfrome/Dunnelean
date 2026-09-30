@@ -1,0 +1,81 @@
+[
+  {
+    "case": "nullable_integer_partitions_cover_all_tails",
+    "state": "SUCCEEDED",
+    "rows": 6,
+    "seconds": 0.313,
+    "peak_rss_mib": 14.4,
+    "run_id": "9d1d3c66-c8de-4e60-841d-b8f574b0e5f5"
+  },
+  {
+    "case": "small_decimals_date_explicit_negative_time_binary",
+    "state": "SUCCEEDED",
+    "rows": 2,
+    "seconds": 0.156,
+    "peak_rss_mib": 14.6,
+    "run_id": "68f82fac-6ec5-4f55-aeb1-1169b8209fc0"
+  },
+  {
+    "case": "small_scalar_roundtrip",
+    "state": "SUCCEEDED",
+    "rows": 2,
+    "seconds": 0.188,
+    "peak_rss_mib": 15.9,
+    "run_id": "daaac94a-916b-43b6-bb34-0cadd210baed"
+  },
+  {
+    "case": "decimal_scale_loss_rejected",
+    "state": "FAILED",
+    "rows": 0,
+    "seconds": 0.172,
+    "peak_rss_mib": 16.0,
+    "run_id": "00d75c9a-dc57-4f09-b209-8059877724c4"
+  },
+  {
+    "case": "zero_date_rejected",
+    "state": "FAILED",
+    "rows": 0,
+    "seconds": 0.156,
+    "peak_rss_mib": 16.1,
+    "run_id": "b43174e1-6c7c-40d6-ad41-644f96a51743"
+  },
+  {
+    "case": "read_connection_interruption",
+    "state": "FAILED",
+    "rows": 0
+  },
+  {
+    "case": "doris_real_committed_response_loss",
+    "state": "SUCCEEDED",
+    "rows": 2,
+    "seconds": 0.172,
+    "peak_rss_mib": 16.3,
+    "run_id": "695b8ffb-7a5d-4c53-8f1d-1bc91ceaa87c"
+  },
+  {
+    "case": "cancel_during_real_committed_load_waits_for_receipt",
+    "state": "CANCELLED",
+    "rows": 2
+  },
+  {
+    "case": "sqlite_receipt_failure_after_real_commit",
+    "state": "FAILED",
+    "rows": 0,
+    "seconds": 0.172,
+    "peak_rss_mib": 16.1,
+    "run_id": "2b73d40f-1f89-4ad0-b9fc-4b77f0a68803"
+  },
+  {
+    "case": "java_deduplicate",
+    "state": "PASSED"
+  },
+  {
+    "case": "java_cancel",
+    "state": "PASSED"
+  },
+  {
+    "case": "process_kill_restart_no_resume",
+    "state": "INTERRUPTED",
+    "rows": 5
+  }
+]

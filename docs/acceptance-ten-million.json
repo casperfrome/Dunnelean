@@ -1,0 +1,18 @@
+[
+  {
+    "case": "scale_10000000_mysql_to_doris",
+    "state": "SUCCEEDED",
+    "rows": 10000000,
+    "seconds": 42.453,
+    "peak_rss_mib": 21.0,
+    "run_id": "e87421be-518e-4ede-89d8-0fa9821392be"
+  },
+  {
+    "case": "scale_10000000_doris_to_mysql",
+    "state": "SUCCEEDED",
+    "rows": 10000000,
+    "seconds": 73.312,
+    "peak_rss_mib": 113.6,
+    "run_id": "f872a59a-6542-44ff-98e5-c59466ab49e9"
+  }
+]

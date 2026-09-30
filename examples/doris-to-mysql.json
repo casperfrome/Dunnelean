@@ -1,0 +1,21 @@
+{
+  "reader": {
+    "type": "doris",
+    "flight_uri": "grpc://127.0.0.1:8070", "database": "dunnelean_test",
+    "credentials": {"username": "dunnelean", "password_env": "DUNNELEAN_TEST_PASSWORD"},
+    "session_variables": {"enable_decimal256": "true"},
+    "endpoint_map": {
+      "grpc+tcp://172.30.41.2:8070": "grpc://127.0.0.1:8070",
+      "grpc+tcp://172.30.41.3:8050": "grpc://127.0.0.1:8050"
+    },
+    "source": {"table": "target_orders"}
+  },
+  "writer": {
+    "type": "mysql",
+    "connection": {
+      "host": "127.0.0.1", "port": 3308, "database": "dunnelean_test",
+      "credentials": {"username": "dunnelean", "password_env": "DUNNELEAN_TEST_PASSWORD"}
+    },
+    "table": "returned_orders", "mode": "insert"
+  }
+}

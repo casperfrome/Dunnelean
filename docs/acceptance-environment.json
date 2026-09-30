@@ -1,0 +1,144 @@
+{
+  "case": "fe_be_recreate_preserves_data_account_config",
+  "passed": true,
+  "before": {
+    "rows": [
+      [
+        10000000,
+        49999995000000,
+        "4999999500.0000"
+      ]
+    ],
+    "config_sha256": {
+      "fe": "400497b0f2fa459cc96a2171ff2fea5e05dcf847878ca680a7850adb9a31eea3",
+      "be": "dd7f019711cded94c00eb6b4159c5780e21ca952285a253608aba577cc509729"
+    },
+    "frontends": [
+      [
+        "fe_63156c71_ae76_4207_a740_91e4a04913a8",
+        "172.30.41.2",
+        "9010",
+        "8030",
+        "9030",
+        "9020",
+        "8070",
+        "FOLLOWER",
+        "true",
+        "1858511190",
+        "true",
+        "true",
+        "3152",
+        "2026-09-29 10:25:08",
+        "2026-09-29 10:54:29",
+        "true",
+        "",
+        "doris-4.1.4-rc04-ad35a140c7f",
+        "Yes",
+        "2026-09-29 10:25:07"
+      ]
+    ],
+    "backends": [
+      [
+        "1790677508448",
+        "172.30.41.3",
+        "9050",
+        "9060",
+        "8040",
+        "8060",
+        "8050",
+        "2026-09-29 10:46:44",
+        "2026-09-29 10:54:29",
+        "true",
+        "false",
+        "40",
+        "49.347 MB",
+        "0.000 ",
+        "889.414 GB",
+        "1006.854 GB",
+        "11.66 %",
+        "11.66 %",
+        "0.000 ",
+        "{\"location\" : \"default\"}",
+        "",
+        "doris-4.1.4-rc04-ad35a140c7f",
+        "{\"lastSuccessReportTabletsTime\":\"2026-09-29 10:54:12\",\"lastStreamLoadTime\":-1,\"isQueryDisabled\":false,\"isLoadDisabled\":false,\"isActive\":true,\"isShutdown\":false,\"currentFragmentNum\":0,\"lastFragmentUpdateTime\":1790679214749}",
+        "0",
+        "16",
+        "6.00 GB",
+        "2026-09-29 10:54:29",
+        "0",
+        "mix"
+      ]
+    ]
+  },
+  "after": {
+    "rows": [
+      [
+        10000000,
+        49999995000000,
+        "4999999500.0000"
+      ]
+    ],
+    "config_sha256": {
+      "fe": "400497b0f2fa459cc96a2171ff2fea5e05dcf847878ca680a7850adb9a31eea3",
+      "be": "dd7f019711cded94c00eb6b4159c5780e21ca952285a253608aba577cc509729"
+    },
+    "frontends": [
+      [
+        "fe_63156c71_ae76_4207_a740_91e4a04913a8",
+        "172.30.41.2",
+        "9010",
+        "8030",
+        "9030",
+        "9020",
+        "8070",
+        "FOLLOWER",
+        "true",
+        "1858511190",
+        "true",
+        "true",
+        "3159",
+        "2026-09-29 10:56:53",
+        "2026-09-29 10:57:20",
+        "true",
+        "",
+        "doris-4.1.4-rc04-ad35a140c7f",
+        "Yes",
+        "2026-09-29 10:56:52"
+      ]
+    ],
+    "backends": [
+      [
+        "1790677508448",
+        "172.30.41.3",
+        "9050",
+        "9060",
+        "8040",
+        "8060",
+        "8050",
+        "2026-09-29 10:57:10",
+        "2026-09-29 10:57:20",
+        "true",
+        "false",
+        "40",
+        "49.373 MB",
+        "0.000 ",
+        "889.428 GB",
+        "1006.854 GB",
+        "11.66 %",
+        "11.66 %",
+        "0.000 ",
+        "{\"location\" : \"default\"}",
+        "",
+        "doris-4.1.4-rc04-ad35a140c7f",
+        "{\"lastStreamLoadTime\":-1,\"isQueryDisabled\":false,\"isLoadDisabled\":false,\"isActive\":true,\"isShutdown\":false,\"currentFragmentNum\":0,\"lastFragmentUpdateTime\":1790679425269}",
+        "0",
+        "16",
+        "6.00 GB",
+        "2026-09-29 10:57:20",
+        "0",
+        "mix"
+      ]
+    ]
+  }
+}

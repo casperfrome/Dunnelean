@@ -1,0 +1,21 @@
+{
+  "reader": {
+    "type": "mysql",
+    "connection": {
+      "host": "127.0.0.1", "port": 3308, "database": "dunnelean_test",
+      "credentials": {"username": "dunnelean", "password_env": "DUNNELEAN_TEST_PASSWORD"}
+    },
+    "source": {"table": "source_orders"}
+  },
+  "writer": {
+    "type": "doris",
+    "sql": {
+      "host": "127.0.0.1", "port": 9030, "database": "dunnelean_test",
+      "credentials": {"username": "dunnelean", "password_env": "DUNNELEAN_TEST_PASSWORD"},
+      "session_variables": {"enable_decimal256": "true"}
+    },
+    "fe_http_urls": ["http://127.0.0.1:8030"],
+    "be_http_urls": ["http://127.0.0.1:8040"],
+    "table": "target_orders", "mode": "append"
+  }
+}
