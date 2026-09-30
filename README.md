@@ -98,6 +98,7 @@ Java 只传配置并轮询状态，无需 Arrow/JDBC 依赖。需要可靠处理
 
 ## 文档与契约
 
+- [原理与 DataX、SeaTunnel 对比](docs/principles-and-comparison.md)
 - [完整参数](docs/parameters.md)
 - [内核结构](docs/architecture.md)
 - [数据类型与运行语义](docs/semantics.md)
