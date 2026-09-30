@@ -1,0 +1,39 @@
+{
+  "request_id": "java-sdk-full-contract",
+  "reader": {
+    "type": "mysql",
+    "connection": {
+      "host": "mysql.example.test", "port": 3308, "database": "source_db",
+      "credentials": {"username": "reader", "password": "sample-password"},
+      "tls": {"enabled": true, "ca_certificate": "/certs/ca.pem", "client_certificate": "/certs/client.pem", "client_key": "/certs/client.key"},
+      "timeouts": {"connect_ms": 12000, "read_ms": 45000, "write_ms": 90000},
+      "charset": "utf8mb4", "time_zone": "+08:00",
+      "session_variables": {"net_read_timeout": "120"}, "max_allowed_packet_bytes": 33554432
+    },
+    "source": {
+      "table": "orders", "columns": ["id", "name"], "where": "name <> ?",
+      "params": [{"type": "string", "value": "excluded"}],
+      "column_types": {"id": "UInt64", "name": "Utf8"}
+    },
+    "batch": {"rows": 2048, "bytes": 8388608}, "consistency": "statement",
+    "split": {"column": "id", "lower_bound": "-9223372036854775808", "upper_bound": "18446744073709551615", "partitions": 4, "parallelism": 2}
+  },
+  "writer": {
+    "type": "doris",
+    "sql": {
+      "host": "doris.example.test", "port": 9030, "database": "target_db",
+      "credentials": {"username": "writer", "password": "sample-password"},
+      "tls": {"enabled": false}, "timeouts": {"connect_ms": 15000, "read_ms": 50000, "write_ms": 100000},
+      "charset": "utf8mb4", "time_zone": "+08:00", "session_variables": {"enable_decimal256": "true"}, "max_allowed_packet_bytes": 33554432
+    },
+    "fe_http_urls": ["https://fe.example.test:8030"], "be_http_urls": ["https://be.example.test:8040"],
+    "endpoint_map": {"https://internal.example.test:8040": "https://be.example.test:8040"},
+    "http_tls": {"enabled": true, "ca_certificate": "/certs/http-ca.pem", "client_certificate": "/certs/client.pem", "client_key": "/certs/client.key"},
+    "table": "orders_copy", "mode": "upsert",
+    "options": {"batch": {"rows": 1024, "bytes": 4194304}, "parallelism": 2, "retry_attempts": 3, "retry_backoff_ms": 300, "pre_sql": ["SELECT 1"], "post_sql": ["SELECT 2"]},
+    "label_prefix": "java_sdk", "load_timeout_seconds": 60, "strict_mode": false, "max_filter_ratio": 0.01,
+    "time_zone": "+08:00", "partitions": ["p2026"], "exec_mem_limit": 1073741824, "headers": {"X-Trace-Id": "contract"}
+  },
+  "mapping": [{"source": "id", "target": "id"}, {"source": "name", "target": "order_name"}],
+  "execution": {"timeout_ms": 120000, "queue_capacity": 8, "memory_bytes": 268435456, "max_row_bytes": 16777216, "rows_per_second": 20000, "bytes_per_second": 10485760}
+}

@@ -86,7 +86,39 @@ Invoke-RestMethod "http://127.0.0.1:9876/v1/runs/$($run.run_id)"
 Invoke-RestMethod "http://127.0.0.1:9876/v1/runs/$($run.run_id)/cancel" -Method Post
 ```
 
-Java 17+ 标准库示例：
+### Java 17+ 类型化 SDK
+
+SDK 提供不可变配置、builder、同步和 `CompletableFuture` 异步调用，可直接作为 Java 项目依赖：
+
+```powershell
+mvn -B -ntp -f sdk/java/pom.xml install
+```
+
+```xml
+<dependency>
+  <groupId>io.github.casperfrome</groupId>
+  <artifactId>dunnelean-java-sdk</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+
+```java
+import io.github.casperfrome.dunnelean.*;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.UUID;
+
+var client = DunneleanClient.builder().build();
+var spec = RunSpecJson.read(Path.of("examples/mysql-to-doris.json"))
+    .toBuilder().requestId(UUID.randomUUID().toString()).build();
+client.validate(spec);
+Run run = client.submit(spec);
+Run result = client.waitForCompletion(run.runId(), Duration.ofMinutes(5), Duration.ofMillis(500));
+```
+
+坐标通过本地安装使用，尚未发布到 Maven Central。完整类型构建、Gradle 接入、异步调用、错误与可靠取消见 [Java SDK 文档](docs/java-sdk.md)。SDK 调用独立运行的 Dunnelean 服务。
+
+原有 Java 17+ 标准库示例仍可使用：
 
 ```text
 javac -encoding UTF-8 examples/java/DunneleanClient.java
@@ -103,6 +135,7 @@ Java 只传配置并轮询状态，无需 Arrow/JDBC 依赖。需要可靠处理
 - [内核结构](docs/architecture.md)
 - [数据类型与运行语义](docs/semantics.md)
 - [工作台可靠控制协议](docs/studio-control.md)
+- [Java SDK 与独立 Maven 示例](docs/java-sdk.md)
 - [Doris 部署说明](docs/deployment.md)
 - [实测验收报告](docs/acceptance.md)
 - [OpenAPI](docs/openapi.json)、[连接器 JSON Schema](docs/connectors.schema.json)

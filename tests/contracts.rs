@@ -95,6 +95,34 @@ fn schema_and_config_reject_silent_misconfiguration() {
 }
 
 #[test]
+fn java_sdk_full_configuration_fixtures_match_rust_wire_contract() {
+    // The Java tests assert their serializer emits exactly these committed trees.
+    // Parsing them here catches drift in tags, field names, value types and defaults.
+    fn omit_optional_nulls(value: &mut Value) {
+        match value {
+            Value::Object(fields) => {
+                fields.retain(|_, value| !value.is_null());
+                for value in fields.values_mut() {
+                    omit_optional_nulls(value);
+                }
+            }
+            Value::Array(values) => values.iter_mut().for_each(omit_optional_nulls),
+            _ => {}
+        }
+    }
+    for fixture in [
+        include_str!("../sdk/java/src/test/resources/all-fields-mysql-to-doris.json"),
+        include_str!("../sdk/java/src/test/resources/all-fields-doris-to-mysql.json"),
+    ] {
+        let expected: Value = serde_json::from_str(fixture).unwrap();
+        let config: RunSpec = serde_json::from_value(expected.clone()).unwrap();
+        let mut actual = serde_json::to_value(config).unwrap();
+        omit_optional_nulls(&mut actual);
+        assert_eq!(actual, expected);
+    }
+}
+
+#[test]
 fn sqlite_receipt_failure_leaves_intent_and_counters_atomic() {
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join("state.sqlite");

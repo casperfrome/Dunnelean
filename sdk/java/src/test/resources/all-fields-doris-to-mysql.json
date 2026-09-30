@@ -1,0 +1,26 @@
+{
+  "request_id": "java-sdk-reverse-contract",
+  "reader": {
+    "type": "doris", "flight_uri": "grpc+tls://flight.example.test:8070", "database": "source_db",
+    "credentials": {"username": "reader", "password_env": "JAVA_SDK_TEST_PASSWORD"},
+    "tls": {"enabled": true, "ca_certificate": "/certs/ca.pem", "client_certificate": "/certs/client.pem", "client_key": "/certs/client.key", "server_name": "flight.example.test"},
+    "timeouts": {"connect_ms": 12000, "read_ms": 45000, "write_ms": 90000},
+    "session_variables": {"enable_decimal256": "true"},
+    "endpoint_map": {"grpc+tcp://internal.example.test:8050": "grpc+tls://flight.example.test:8070"},
+    "source": {"query": "SELECT id, name FROM orders", "columns": [], "params": [], "column_types": {"id": "UInt64", "name": "Utf8"}},
+    "batch": {"rows": 2048, "bytes": 8388608}, "endpoint_parallelism": 2, "max_grpc_message_bytes": 33554432
+  },
+  "writer": {
+    "type": "mysql",
+    "connection": {
+      "host": "mysql.example.test", "port": 3308, "database": "target_db",
+      "credentials": {"username": "writer", "password_env": "JAVA_SDK_TEST_PASSWORD"},
+      "tls": {"enabled": false}, "timeouts": {"connect_ms": 15000, "read_ms": 50000, "write_ms": 100000},
+      "charset": "utf8mb4", "time_zone": "+08:00", "session_variables": {"net_write_timeout": "120"}, "max_allowed_packet_bytes": 33554432
+    },
+    "table": "orders_copy", "mode": "upsert", "key_columns": ["id"], "update_columns": ["name"],
+    "options": {"batch": {"rows": 1024, "bytes": 4194304}, "parallelism": 2, "retry_attempts": 3, "retry_backoff_ms": 300, "pre_sql": ["SELECT 1"], "post_sql": ["SELECT 2"]}
+  },
+  "mapping": [{"source": "id", "target": "id"}, {"source": "name", "target": "order_name"}],
+  "execution": {"timeout_ms": 120000, "queue_capacity": 8, "memory_bytes": 268435456, "max_row_bytes": 16777216, "rows_per_second": 20000, "bytes_per_second": 10485760}
+}

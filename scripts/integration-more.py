@@ -128,6 +128,33 @@ try:
         assert result.returncode==0,result.stdout+result.stderr
         (t.ROOT/f'var/java{option}.log').write_text(result.stdout,encoding='utf-8')
         t.REPORT.append({'case':'java_'+option[2:],'state':'PASSED'})
+    # The separate Maven consumer uses the locally installed typed SDK, not SDK source files.
+    subprocess.run(['mvn.cmd' if os.name=='nt' else 'mvn','-B','-ntp','-f',str(t.ROOT/'sdk/java/pom.xml'),'install'],check=True)
+    subprocess.run(['mvn.cmd' if os.name=='nt' else 'mvn','-B','-ntp','-f',str(t.ROOT/'examples/java/sdk/pom.xml'),'package'],check=True)
+    sdk_classes=t.ROOT/'examples/java/sdk/target/classes'
+    sdk_deps=t.ROOT/'examples/java/sdk/target/dependency/*'
+    sdk_classpath=str(sdk_classes)+os.pathsep+str(sdk_deps)
+    # Use fresh SDK-owned targets: previous acceptance cases have already filled target_orders/returned_orders.
+    t.sql('DROP TABLE IF EXISTS java_sdk_target',doris=True)
+    t.sql('''CREATE TABLE java_sdk_target (
+        id DECIMAL(20,0) NOT NULL, amount DECIMAL(30,10), precise_value DECIMAL(65,5),
+        Name VARCHAR(512), event_time DATETIME(6), event_instant DATETIME(6), enabled TINYINT, notes STRING
+    ) DUPLICATE KEY(id) DISTRIBUTED BY HASH(id) BUCKETS 1 PROPERTIES("replication_num"="1")''',doris=True)
+    t.sql('DROP TABLE IF EXISTS java_sdk_returned')
+    t.sql('CREATE TABLE java_sdk_returned LIKE returned_orders')
+    for direction,option in [('mysql-to-doris','--deduplicate'),('doris-to-mysql','--async'),('mysql-to-doris','--cancel')]:
+        spec=t.job(direction)
+        spec['reader']['source']['where']='id < 10'
+        spec['writer']['table']='java_sdk_target' if direction=='mysql-to-doris' else 'java_sdk_returned'
+        if direction=='doris-to-mysql':spec['reader']['source']['table']='java_sdk_target'
+        if option=='--cancel':spec['execution']={'rows_per_second':1}
+        path=t.ROOT/'var/java-sdk-job.json';path.write_text(json.dumps(spec),encoding='utf-8')
+        result=subprocess.run(['java','-cp',sdk_classpath,'io.github.casperfrome.dunnelean.example.SdkExample',str(path),option],env=env,text=True,encoding='utf-8',capture_output=True,timeout=90)
+        assert result.returncode==0,result.stdout+result.stderr
+        (t.ROOT/f'var/java-sdk-{direction}{option}.log').write_text(result.stdout,encoding='utf-8')
+        t.REPORT.append({'case':'java_sdk_'+direction+'_'+option[2:],'state':'PASSED'})
+        if direction=='doris-to-mysql':
+            assert t.sql('SELECT * FROM source_orders WHERE id < 10 ORDER BY id')==t.sql('SELECT * FROM java_sdk_returned ORDER BY id'),'SDK roundtrip mismatch'
     # Force-kill the actual process, retain progress and prevent automatic resume.
     slow=t.job('mysql-to-doris');slow['reader']['source']={'table':'bench_source','where':'id < 10000'};slow['writer']['table']='bench_target'
     slow['reader']['batch']={'rows':5,'bytes':65536};slow['writer']['options']={'batch':{'rows':5,'bytes':65536}};slow['execution']={'rows_per_second':25,'queue_capacity':1}

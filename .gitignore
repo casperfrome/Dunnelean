@@ -19,6 +19,8 @@ __pycache__/
 
 # Java build artifacts
 *.class
+/sdk/java/target/
+/examples/java/sdk/target/
 
 # Runtime files outside var/
 *.log
