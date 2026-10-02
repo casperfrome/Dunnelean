@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "version": "0.1.0",
+  "abi_version": 1,
+  "source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+  "source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+  "assets": [
+    {
+      "goos": "darwin",
+      "goarch": "amd64",
+      "target": "x86_64-apple-darwin",
+      "file": "darwin_amd64.gz",
+      "library": "libdunnelean_native.dylib",
+      "size": 20644848,
+      "sha256": "6f01eee65045a97c2de22d9c190af5d7be42d74b3e3a1b0add2b90b014a7eea5",
+      "compressed_size": 7709985,
+      "compressed_sha256": "cfeb0054299083f320465a2513fc120fd4230f8e23b1b240377de1a578ff9f0e",
+      "dependencies": [
+        "/System/Library/Frameworks/Security.framework/Versions/A/Security",
+        "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation",
+        "/usr/lib/libiconv.2.dylib",
+        "/usr/lib/libSystem.B.dylib"
+      ]
+    },
+    {
+      "goos": "darwin",
+      "goarch": "arm64",
+      "target": "aarch64-apple-darwin",
+      "file": "darwin_arm64.gz",
+      "library": "libdunnelean_native.dylib",
+      "size": 18720560,
+      "sha256": "da4aaecbf1d16b651a8d147625c4cfdb83b2a0c66f1a74320af0a8144e96f04e",
+      "compressed_size": 6974368,
+      "compressed_sha256": "ef846ee297a909248217f685eac3d5e83f6a920ef1b037a6192b4b09ba85f6ee",
+      "dependencies": [
+        "/System/Library/Frameworks/Security.framework/Versions/A/Security",
+        "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation",
+        "/usr/lib/libiconv.2.dylib",
+        "/usr/lib/libSystem.B.dylib"
+      ]
+    },
+    {
+      "goos": "linux",
+      "goarch": "amd64",
+      "target": "x86_64-unknown-linux-gnu",
+      "file": "linux_amd64.gz",
+      "library": "libdunnelean_native.so",
+      "size": 22761760,
+      "sha256": "c9a3a85aef57d1325a55870ad7b274ef977603b45b01a85a9b0d3471b36b037c",
+      "compressed_size": 8030046,
+      "compressed_sha256": "ab65b3d726930131b767396738943937007597673a05f184f9e8cdaa3fd28153",
+      "dependencies": [
+        "ld-linux-x86-64.so.2",
+        "libc.so.6",
+        "libdl.so.2",
+        "libgcc_s.so.1",
+        "libm.so.6",
+        "libpthread.so.0",
+        "librt.so.1"
+      ]
+    },
+    {
+      "goos": "windows",
+      "goarch": "amd64",
+      "target": "x86_64-pc-windows-msvc",
+      "file": "windows_amd64.gz",
+      "library": "dunnelean_native.dll",
+      "size": 23958528,
+      "sha256": "43cab10d1d33f11cedb725987d493c670ec25297cf9c697a7c45b044c825f5f6",
+      "compressed_size": 7854962,
+      "compressed_sha256": "391720b64b97257b237f28980f6f89f4a5f7d6469e1123efade30ff0a985ac4b",
+      "dependencies": [
+        "KERNEL32.dll",
+        "WS2_32.dll",
+        "advapi32.dll",
+        "api-ms-win-core-synch-l1-2-0.dll",
+        "bcrypt.dll",
+        "bcryptprimitives.dll",
+        "crypt32.dll",
+        "kernel32.dll",
+        "ntdll.dll",
+        "ws2_32.dll"
+      ]
+    }
+  ]
+}

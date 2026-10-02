@@ -140,11 +140,14 @@ if err == nil && status.Run != nil {
 | `engine.StateStoreID()` | 缓存的状态库身份 string |
 | `engine.Close(ctx)` | 禁止新工作，取消活动作业并等待释放资源 |
 | `Connectors(ctx)` / `RequestSchema(ctx)` | Rust 生成的能力描述和 JSON Schema，不打开状态库 |
+| `engine.Connectors(ctx)` / `engine.RequestSchema(ctx)` | 同样的元数据，使用该实例已加载的原生库与缓存配置 |
 | `Version` | 包与内嵌引擎版本常量 |
 
 计数使用 `uint64`；配置和 schema 的自由结构使用 `json.RawMessage`，避免把大整数转成 `float64`。运行 `Config` 是脱敏审计记录，不能直接作为有效配置重放。配置中的 i64/u64/Decimal 参数值和分片整数边界保持 JSON 字符串；二进制参数保持 Base64。
 
-API 错误可用 `errors.As` 读取 `*dunnelean.Error` 的 `Code`、`Message`、`CommitUnknown` 和 `Retryable`。等待期限耗尽为 `*WaitTimeoutError`，提供 `RunID` 和 `Timeout`；关闭超时为 `*CloseTimeoutError`。两种超时支持 `errors.Is(err, context.DeadlineExceeded)`。`Retryable` 描述对应操作，不授权重放整个同步作业。
+API 错误可用 `errors.As` 读取 `*dunnelean.Error` 的 `Code`、`Message`、`CommitUnknown` 和 `Retryable`。等待期限耗尽为 `*WaitTimeoutError`，提供 `RunID` 和 `Timeout`；关闭超时为 `*CloseTimeoutError`。两种超时支持 `errors.Is(err, context.DeadlineExceeded)`，也可用 `errors.As` 读取 `*Error` 的 `WAIT_TIMEOUT` / `CLOSE_TIMEOUT` 字段。`Retryable` 描述对应操作，不授权重放整个同步作业。
+
+包级元数据函数使用默认用户缓存目录；应用设置 `WithNativeCacheDir` 后，可用实例元数据方法沿用该目录，避免受限运行环境再次访问默认缓存。
 
 一个状态库同一时间只允许一个拥有者，包括 Go/Python 实例和 HTTP 服务。锁冲突报 `STATE_STORE`；应用应给不同实例使用不同持久文件。成功 `Close` 等待任务及进行中的调用退出，随后释放状态库锁；立即重开同一路径有效。重复关闭安全返回。
 

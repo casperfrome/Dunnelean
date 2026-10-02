@@ -15,7 +15,7 @@ Doris Flight SQL      → Arrow RecordBatch → prepared multi-row INSERT → My
 
 - Git、Rust 和本机编译工具。`rust-toolchain.toml` 固定 Rust **1.98.1**，依赖由 `Cargo.lock` 锁定。
 - Windows 使用 Visual Studio C++ Build Tools；本项目已在 Windows MSVC 上验收。
-- Linux 需要 Rust 和 C 编译器；**Linux 编译尚未完成实测**，当前本地部署脚本针对 Windows PowerShell。
+- 从源码编译 Linux 服务需要 Rust 和 C 编译器；原生库已通过 manylinux2014 构建验收，本地部署脚本针对 Windows PowerShell。
 - 接入已有数据库时，需要可连接的 MySQL/Doris、具备读写权限的账号，以及预先创建的目标表。
 
 Python 和 Docker 用于下文的可选本地测试环境；Java 示例需要 JDK 17+。
