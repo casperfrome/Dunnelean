@@ -4,7 +4,7 @@
 
 ## 安装与构建
 
-首版面向常规 CPython 3.10–3.14，wheel 使用 `abi3-py310`。构建目标为 Windows x86_64、Linux x86_64（manylinux2014 / glibc 2.17+）、macOS Intel 与 Apple Silicon；不包含 PyPy、32 位 Python 或 free-threaded Python。四平台的实际验证以 [Python CI](../.github/workflows/python.yml) 的运行结果为准。
+首版面向常规 CPython 3.10–3.14，wheel 使用 `abi3-py310`。构建目标为 Windows x86_64、Linux x86_64（manylinux2014 / glibc 2.17+）、macOS Intel 与 Apple Silicon；不包含 PyPy、32 位 Python 或 free-threaded Python。四平台的实际验证以 [Python CI](https://github.com/casperfrome/Dunnelean/blob/main/.github/workflows/python.yml) 的运行结果为准。
 
 项目尚未发布到 PyPI。可安装 CI 构建产物中的匹配平台 wheel，例如 Windows：
 
@@ -32,7 +32,9 @@ $dunneleanBuildDir = Join-Path ([IO.Path]::GetTempPath()) ('dunnelean-build-' + 
 
 ## 同步调用
 
-配置继续沿用 [完整参数](parameters.md) 和现有 `examples/*.json`。接口接受 Python mapping 或 JSON 字符串，响应为普通 `dict` / `list`，字段名保持 Rust 的 `snake_case`。省略字段使用 Rust 默认值，未知配置字段被拒绝。
+配置继续沿用 [完整参数](https://github.com/casperfrome/Dunnelean/blob/main/docs/parameters.md) 和仓库中的 [JSON 示例](https://github.com/casperfrome/Dunnelean/tree/main/examples)。接口接受 Python mapping 或 JSON 字符串，响应为普通 `dict` / `list`，字段名保持 Rust 的 `snake_case`。省略字段使用 Rust 默认值，未知配置字段被拒绝。
+
+下列读取 `examples/...` 的代码在仓库根目录运行；只安装 wheel 的应用可从上述链接取得 JSON，改用自己的配置路径。
 
 ```python
 import json
@@ -55,7 +57,7 @@ with Engine("var/python-jobs.sqlite") as engine:
 
 `validate` 会访问数据库，检查连接、来源与目标 schema 和映射。`submit` 先检查配置并返回已持久保存的运行，数据传输在 Rust 后台继续执行；数据库预检或传输失败会记录在运行中。`run(spec, timeout=300, poll_interval=0.5)` 是提交并等待完成的便捷方法。
 
-`FAILED`、`CANCELLED`、`INTERRUPTED` 也会作为完整运行返回；调用方按 `state/error/partial_write/commit_unknown` 判断业务结果。没有全任务回滚，取消保留已提交批次，重开状态库不会自动恢复数据传输。详细边界见 [运行语义](semantics.md)。
+`FAILED`、`CANCELLED`、`INTERRUPTED` 也会作为完整运行返回；调用方按 `state/error/partial_write/commit_unknown` 判断业务结果。没有全任务回滚，取消保留已提交批次，重开状态库不会自动恢复数据传输。详细边界见 [运行语义](https://github.com/casperfrome/Dunnelean/blob/main/docs/semantics.md)。
 
 `password_env` 由当前 Python 进程中的 Rust 核心读取。请在创建或执行作业前设置环境变量；证书文件路径也由该进程解析，不再由另一个 Dunnelean 服务读取。不要输出包含真实密码的输入配置。
 
@@ -198,7 +200,7 @@ except CloseTimeoutError:
 
 常规测试使用临时 SQLite 和本地模拟 TCP 端点，无需启动 MySQL/Doris；覆盖状态锁、幂等、取消记录、配置契约、GIL、asyncio 等待及关闭。CI 在仓库外导入已安装包，对四平台分别测试 Python 3.10–3.14。
 
-真实数据库验收只面向项目独立的 `dunnelean_test` 测试环境。先按 README 启动并初始化测试数据库，再运行：
+真实数据库验收只面向项目独立的 `dunnelean_test` 测试环境。先按 [README](https://github.com/casperfrome/Dunnelean/blob/main/README.md) 启动并初始化测试数据库，再运行：
 
 ```powershell
 & 'D:\PythonVenv\Scripts\python.exe' scripts/integration-python.py
@@ -219,4 +221,37 @@ except CloseTimeoutError:
 | MySQL 实际 COMMIT 后丢失回复 | `FAILED`、`commit_unknown=true`，目标存在 2 行，仅一次 COMMIT，没有重放 |
 | 取消 asyncio 等待协程 | 运行继续；显式取消执行后达到 `CANCELLED` |
 
-真实数据库结果保存在本机 `var/acceptance-python.json`。Linux、macOS 和其余 Python 版本的结果仍待四平台 CI 实际运行验证。
+真实数据库结果保存在 [数据库验收报告](https://github.com/casperfrome/Dunnelean/blob/main/docs/acceptance-python.json)。Rust 核心 21 项、原生绑定 7 项、Java 单元测试 42 项及真实 Rust HTTP 集成测试 1 项均通过。
+
+[四平台 CI](https://github.com/casperfrome/Dunnelean/actions/runs/36957731098) 已验证代码提交 `72a6b516a7ce246cdc1816748b648869882204f4`：4 个构建任务与 20 个安装测试任务全部成功。每个平台均从 sdist 重建 wheel，在仓库外安装后测试常规 CPython 3.10–3.14，每个版本通过 31 项 pytest。真实数据库验收在上述 Windows 本地环境执行；CI 使用临时状态库和模拟端点。
+
+| 平台 | wheel 标签 | CPython 3.10–3.14 安装测试 |
+| --- | --- | --- |
+| Windows x86_64 | `cp310-abi3-win_amd64` | 5 个版本全部通过 |
+| Linux x86_64 | `cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64` | 5 个版本全部通过 |
+| macOS Intel | `cp310-abi3-macosx_10_12_x86_64` | 5 个版本全部通过 |
+| macOS Apple Silicon | `cp310-abi3-macosx_11_0_arm64` | 5 个版本全部通过 |
+
+四种 wheel 及各平台 sdist 均通过 `twine check --strict`。各任务链接、分发文件 SHA-256 与本地回归计数保存在 [构建安装验收报告](https://github.com/casperfrome/Dunnelean/blob/main/docs/acceptance-python-ci.json)；wheel/sdist 同时保存在该 CI 的 artifacts 中。
+
+## 后续版本发布清单
+
+当前 CI 只保存构建产物，发布由维护者后续手动执行：
+
+1. 同步根 `Cargo.toml`、`sdk/python/Cargo.toml` 和 `pyproject.toml` 的版本，更新锁文件及文档中的安装版本、发布状态；确认安装后的 `dunnelean.__version__` 与 wheel/sdist 元数据一致。
+2. 对同一发布提交完成四平台构建，以及每个平台 CPython 3.10–3.14 的已安装 wheel 测试；重新通过真实数据库验收，保存 CI 和验收报告。
+3. 检查原生模块、`cp310-abi3` 与平台标签、许可证、`Requires-Python` 和长描述。sdist 必须在仓库外重建并安装验证；文档作为长描述变更后也要重建最终发布产物。
+4. 将同一版本的四个 wheel 和一个已验证 sdist 收集到只含本次发布文件的 `release-dist`，对将要上传的文件运行 [Twine 检查](https://twine.readthedocs.io/en/stable/#twine-check)：
+
+```powershell
+& 'D:\PythonVenv\Scripts\python.exe' -m pip install twine
+& 'D:\PythonVenv\Scripts\python.exe' -m twine check --strict 'release-dist/*'
+```
+
+维护者确认项目名与账号权限后，可按 [PyPA 发布教程](https://packaging.python.org/en/latest/tutorials/packaging-projects/#uploading-the-distribution-archives) 先在 TestPyPI 验证。以下正式上传命令仅供未来手动发布使用，本次任务没有执行上传：
+
+```powershell
+& 'D:\PythonVenv\Scripts\python.exe' -m twine upload --repository pypi 'release-dist/*'
+```
+
+认证通过交互提示或本机凭据管理器提供；不要把凭据写进命令、示例或仓库。正式发布后，在干净环境从 PyPI 安装该版本并检查导入及 `__version__`。

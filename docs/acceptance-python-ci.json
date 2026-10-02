@@ -1,0 +1,242 @@
+{
+  "package_version": "0.1.0",
+  "verified_code_commit": "72a6b516a7ce246cdc1816748b648869882204f4",
+  "ci_run": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098",
+  "result": "success",
+  "builds": [
+    {
+      "conclusion": "success",
+      "databaseId": 110684383687,
+      "name": "Build wheel and sdist (windows-x86_64)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110684383687"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110684383902,
+      "name": "Build wheel and sdist (linux-x86_64)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110684383902"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110684383963,
+      "name": "Build wheel and sdist (macos-x86_64)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110684383963"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110684384120,
+      "name": "Build wheel and sdist (macos-arm64)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110684384120"
+    }
+  ],
+  "installed_wheel_tests": [
+    {
+      "conclusion": "success",
+      "databaseId": 110687749466,
+      "name": "Installed wheel (windows-x86_64, Python 3.11)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749466"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749468,
+      "name": "Installed wheel (linux-x86_64, Python 3.12)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749468"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749472,
+      "name": "Installed wheel (macos-arm64, Python 3.10)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749472"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749478,
+      "name": "Installed wheel (windows-x86_64, Python 3.13)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749478"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749482,
+      "name": "Installed wheel (macos-x86_64, Python 3.12)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749482"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749489,
+      "name": "Installed wheel (macos-x86_64, Python 3.10)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749489"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749497,
+      "name": "Installed wheel (macos-x86_64, Python 3.13)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749497"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749501,
+      "name": "Installed wheel (linux-x86_64, Python 3.14)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749501"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749505,
+      "name": "Installed wheel (windows-x86_64, Python 3.10)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749505"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749523,
+      "name": "Installed wheel (linux-x86_64, Python 3.10)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749523"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749539,
+      "name": "Installed wheel (macos-arm64, Python 3.13)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749539"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749553,
+      "name": "Installed wheel (macos-arm64, Python 3.12)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749553"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749557,
+      "name": "Installed wheel (macos-arm64, Python 3.11)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749557"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749559,
+      "name": "Installed wheel (windows-x86_64, Python 3.14)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749559"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749569,
+      "name": "Installed wheel (linux-x86_64, Python 3.13)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749569"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749581,
+      "name": "Installed wheel (macos-x86_64, Python 3.11)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749581"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749582,
+      "name": "Installed wheel (linux-x86_64, Python 3.11)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749582"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749586,
+      "name": "Installed wheel (macos-arm64, Python 3.14)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749586"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749601,
+      "name": "Installed wheel (windows-x86_64, Python 3.12)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749601"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 110687749634,
+      "name": "Installed wheel (macos-x86_64, Python 3.14)",
+      "status": "completed",
+      "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36957731098/job/110687749634"
+    }
+  ],
+  "tests_per_installed_wheel": 31,
+  "distributions": [
+    {
+      "platform": "windows",
+      "filename": "dunnelean-0.1.0-cp310-abi3-win_amd64.whl",
+      "size_bytes": 8868752,
+      "sha256": "8c828a9504f9e29c9f2a74f0946cfa3b46af4e432d3a0de13b0061c95ee9f32d"
+    },
+    {
+      "platform": "windows",
+      "filename": "dunnelean-0.1.0.tar.gz",
+      "size_bytes": 101571,
+      "sha256": "2253f5639a78f7c9c00e3156f2aecf06d93abc54cfeffefdc2ff000341ec9917"
+    },
+    {
+      "platform": "linux",
+      "filename": "dunnelean-0.1.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "size_bytes": 8768725,
+      "sha256": "e550f97a52970055d49563d2a6f905811eb408a01edfeab11a24bfba49615297"
+    },
+    {
+      "platform": "linux",
+      "filename": "dunnelean-0.1.0.tar.gz",
+      "size_bytes": 101316,
+      "sha256": "314fe32ba62eb020b13a9171e6b7b66b8db1a0c81ba07ad0c8ee2f4c2aee1b01"
+    },
+    {
+      "platform": "macos-x86_64",
+      "filename": "dunnelean-0.1.0-cp310-abi3-macosx_10_12_x86_64.whl",
+      "size_bytes": 8412711,
+      "sha256": "462abaf31f9d2f07348d4f993817e4177d1be0f7d00d6b718f986c49a00464e1"
+    },
+    {
+      "platform": "macos-x86_64",
+      "filename": "dunnelean-0.1.0.tar.gz",
+      "size_bytes": 101316,
+      "sha256": "314fe32ba62eb020b13a9171e6b7b66b8db1a0c81ba07ad0c8ee2f4c2aee1b01"
+    },
+    {
+      "platform": "macos-arm64",
+      "filename": "dunnelean-0.1.0-cp310-abi3-macosx_11_0_arm64.whl",
+      "size_bytes": 7883842,
+      "sha256": "2c90c83a998ce1dff232d16479f5d46b90560ef22eb3579623fb9300ff63aa3f"
+    },
+    {
+      "platform": "macos-arm64",
+      "filename": "dunnelean-0.1.0.tar.gz",
+      "size_bytes": 101316,
+      "sha256": "314fe32ba62eb020b13a9171e6b7b66b8db1a0c81ba07ad0c8ee2f4c2aee1b01"
+    }
+  ],
+  "local_verification": {
+    "platform": "windows-x86_64",
+    "python": "3.10.11",
+    "pytest_passed": 31,
+    "rust_core_tests_passed": 21,
+    "rust_binding_tests_passed": 7,
+    "java_unit_tests_passed": 42,
+    "java_real_rust_http_tests_passed": 1,
+    "real_database_cases_passed": 5,
+    "database_report": "docs/acceptance-python.json",
+    "sdist_rebuild_outside_repository": true,
+    "twine_strict": "passed"
+  }
+}
