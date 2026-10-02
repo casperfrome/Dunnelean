@@ -105,6 +105,11 @@ impl Store {
         }
         Ok(store)
     }
+    /// Report whether this store is the last owner of its connection and lock.
+    /// Callers must prevent new owners before using this to finalize shutdown.
+    pub fn is_exclusively_owned(&self) -> bool {
+        Arc::strong_count(&self.db) == 1 && Arc::strong_count(&self._process_lock) == 1
+    }
     fn lock(&self) -> Result<std::sync::MutexGuard<'_, Connection>> {
         self.db
             .lock()

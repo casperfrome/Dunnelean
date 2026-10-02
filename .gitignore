@@ -16,6 +16,10 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+/dist/
+*.egg-info/
+*.pyd
+*.so
 
 # Java build artifacts
 *.class

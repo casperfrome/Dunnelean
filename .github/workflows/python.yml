@@ -1,0 +1,164 @@
+name: Python library
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_BUILD_JOBS: "2"
+  PYTHONUTF8: "1"
+
+jobs:
+  build:
+    name: Build wheel and sdist (${{ matrix.platform.name }})
+    runs-on: ${{ matrix.platform.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: windows-x86_64
+            runner: windows-2022
+            target: x86_64-pc-windows-msvc
+            manylinux: "off"
+            interpreter: python
+          - name: linux-x86_64
+            runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            manylinux: "2014"
+            interpreter: python3.10
+          - name: macos-x86_64
+            runner: macos-15-intel
+            target: x86_64-apple-darwin
+            manylinux: "off"
+            interpreter: python
+          - name: macos-arm64
+            runner: macos-15
+            target: aarch64-apple-darwin
+            manylinux: "off"
+            interpreter: python
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+      # maturin 1.15 builds the sdist, unpacks it in a temporary directory,
+      # and builds the wheel from that tree instead of the checkout.
+      - name: Rebuild wheel from sdist outside the checkout
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          maturin-version: v1.15.0
+          rust-toolchain: "1.98.1"
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          command: build
+          args: --release --locked --sdist --out dist -i ${{ matrix.platform.interpreter }}
+          docker-options: -e CARGO_BUILD_JOBS=2
+      - name: Verify distribution contents and ABI tags
+        shell: python
+        run: |
+          from pathlib import Path
+          import tarfile
+          import zipfile
+
+          wheels = list(Path("dist").glob("*.whl"))
+          sources = list(Path("dist").glob("*.tar.gz"))
+          assert len(wheels) == 1, wheels
+          assert len(sources) == 1, sources
+          assert "-cp310-abi3-" in wheels[0].name, wheels[0]
+          with zipfile.ZipFile(wheels[0]) as archive:
+              assert "dunnelean/__init__.py" in archive.namelist()
+              assert any(name.endswith((".pyd", ".so")) for name in archive.namelist())
+          with tarfile.open(sources[0], "r:gz") as archive:
+              names = archive.getnames()
+              for suffix in ("/pyproject.toml", "/Cargo.lock", "/src/lib.rs",
+                             "/sdk/python/Cargo.toml", "/sdk/python/src/lib.rs"):
+                  assert any(name.endswith(suffix) for name in names), suffix
+          print(wheels[0])
+          print(sources[0])
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-dist-${{ matrix.platform.name }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+  test-installed-wheel:
+    name: Installed wheel (${{ matrix.platform.name }}, Python ${{ matrix.python }})
+    needs: build
+    runs-on: ${{ matrix.platform.runner }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        platform:
+          - name: windows-x86_64
+            runner: windows-2022
+          - name: linux-x86_64
+            runner: ubuntu-22.04
+          - name: macos-x86_64
+            runner: macos-15-intel
+          - name: macos-arm64
+            runner: macos-15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: python-dist-${{ matrix.platform.name }}
+          path: dist
+      - name: Install the built wheel
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          import sys
+
+          wheels = list(Path("dist").glob("*.whl"))
+          assert len(wheels) == 1, wheels
+          subprocess.run([sys.executable, "-m", "pip", "install", "pytest>=8,<10",
+                          "pytest-asyncio>=0.24,<2"], check=True)
+          subprocess.run([sys.executable, "-m", "pip", "install", "--no-deps", "--force-reinstall",
+                          str(wheels[0].resolve())], check=True)
+      - name: Test installed package outside the checkout
+        working-directory: ${{ runner.temp }}
+        shell: python
+        run: |
+          from pathlib import Path
+          import os
+          import subprocess
+          import sys
+          import dunnelean
+
+          repository = Path(os.environ["GITHUB_WORKSPACE"]).resolve()
+          installed = Path(dunnelean.__file__).resolve()
+          assert not installed.is_relative_to(repository), installed
+          print("Installed package:", installed)
+          subprocess.run([sys.executable, "-I", "-m", "pytest",
+                          str(repository / "sdk/python/tests"), "-q"], check=True)
+      - name: Check example entry points
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          import sys
+
+          for example in ("sync.py", "async_example.py"):
+              subprocess.run([sys.executable, "-I", str(Path("examples/python", example).resolve()),
+                              "--help"], check=True)

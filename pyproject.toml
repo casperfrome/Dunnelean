@@ -1,0 +1,48 @@
+[build-system]
+requires = ["maturin>=1.15,<2"]
+build-backend = "maturin"
+
+[project]
+name = "dunnelean"
+version = "0.1.0"
+description = "Arrow-native MySQL and Doris batch synchronization, embedded in Python"
+readme = "docs/python-sdk.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{name = "Dunnelean contributors"}]
+classifiers = [
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Rust",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Topic :: Database",
+]
+
+[project.urls]
+Repository = "https://github.com/casperfrome/Dunnelean"
+Documentation = "https://github.com/casperfrome/Dunnelean/blob/main/docs/python-sdk.md"
+
+[project.optional-dependencies]
+test = ["pytest>=8,<10", "pytest-asyncio>=0.24,<2"]
+
+[tool.maturin]
+manifest-path = "sdk/python/Cargo.toml"
+python-source = "sdk/python/python"
+module-name = "dunnelean._native"
+bindings = "pyo3"
+exclude = ["**/__pycache__/**", "**/*.py[cod]"]
+include = [
+    {path = "rust-toolchain.toml", format = "sdist"},
+    {path = "sdk/python/tests/**/*", format = "sdist"},
+    {path = "sdk/java/src/test/resources/*.json", format = "sdist"},
+    {path = "examples/*.json", format = "sdist"},
+    {path = "examples/python/*.py", format = "sdist"},
+]
+
+[tool.pytest.ini_options]
+testpaths = ["sdk/python/tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

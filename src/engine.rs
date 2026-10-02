@@ -6,8 +6,10 @@ use crate::{
     types::{self, BatchMapping},
 };
 use arrow::{datatypes::SchemaRef, record_batch::RecordBatch};
+use futures::FutureExt;
 use std::{
     collections::HashMap,
+    panic::AssertUnwindSafe,
     sync::{
         Arc,
         atomic::{AtomicBool, AtomicU64, Ordering},
@@ -207,7 +209,7 @@ impl Engine {
         })
     }
     pub fn ready(&self) -> Result<()> {
-        if !self.accepting.load(Ordering::Relaxed) {
+        if !self.accepting.load(Ordering::Acquire) {
             return Err(Error::new("BUSY", "Service is shutting down"));
         }
         self.store.healthy()
@@ -224,6 +226,9 @@ impl Engine {
             .try_acquire_owned()
             .map_err(|_| Error::new("BUSY", "Run queue is full"))?;
         let mut active = self.active.lock().await;
+        // Serialize admission with shutdown's cancellation pass. A submission
+        // that checked readiness before shutdown must not slip into the map later.
+        self.ready()?;
         let (run, created) = self.store.submit(&spec)?;
         if !created {
             return Ok(run);
@@ -233,7 +238,8 @@ impl Engine {
         drop(active);
         let engine = self.clone();
         let id = run.run_id.clone();
-        tokio::spawn(async move {
+        let supervisor = self.clone();
+        tokio::spawn(supervise_run(supervisor, id.clone(), async move {
             let _admission = admission;
             let permit = tokio::select! {biased;_=cancel.cancelled()=>None,p=engine.running.clone().acquire_owned()=>p.ok()};
             let outcome = if let Some(_permit) = permit {
@@ -271,8 +277,7 @@ impl Engine {
             }) {
                 tracing::error!(run_id=%id,error=%e,"Could not persist terminal run state; startup will reconcile interruption");
             }
-            engine.active.lock().await.remove(&id);
-        });
+        }));
         Ok(run)
     }
     pub async fn cancel(&self, id: &str) -> Result<Run> {
@@ -303,13 +308,39 @@ impl Engine {
         self.store.request(id)
     }
     pub async fn shutdown(&self, wait_ms: u64) {
-        self.accepting.store(false, Ordering::Relaxed);
-        for token in self.active.lock().await.values() {
-            token.cancel();
-        }
-        let deadline = Instant::now() + Duration::from_millis(wait_ms);
-        while !self.active.lock().await.is_empty() && Instant::now() < deadline {
-            tokio::time::sleep(Duration::from_millis(100)).await;
+        self.shutdown_and_wait(wait_ms).await;
+    }
+    /// Stop admission, request cancellation, and report whether every run drained.
+    /// A false result leaves the engine and its store usable for a later wait.
+    pub async fn shutdown_and_wait(&self, wait_ms: u64) -> bool {
+        self.accepting.store(false, Ordering::Release);
+        let started = Instant::now();
+        let budget = Duration::from_millis(wait_ms);
+        loop {
+            let remaining = budget.saturating_sub(started.elapsed());
+            let active = if remaining.is_zero() {
+                match self.active.try_lock() {
+                    Ok(active) => active,
+                    Err(_) => return false,
+                }
+            } else {
+                match tokio::time::timeout(remaining, self.active.lock()).await {
+                    Ok(active) => active,
+                    Err(_) => return false,
+                }
+            };
+            for token in active.values() {
+                token.cancel();
+            }
+            if active.is_empty() {
+                return true;
+            }
+            drop(active);
+            let remaining = budget.saturating_sub(started.elapsed());
+            if remaining.is_zero() {
+                return false;
+            }
+            tokio::time::sleep(remaining.min(Duration::from_millis(100))).await;
         }
     }
     async fn run(&self, id: &str, spec: Arc<RunSpec>, cancel: CancellationToken) -> Result<()> {
@@ -441,6 +472,32 @@ impl Engine {
         Ok(())
     }
 }
+async fn supervise_run(engine: Engine, id: String, task: impl std::future::Future<Output = ()>) {
+    // Catch panics from both the pipeline and receipt finalization. Otherwise a
+    // dropped JoinHandle would leave the run active forever and prevent closing.
+    if AssertUnwindSafe(task).catch_unwind().await.is_err() {
+        let error = Error {
+            commit_unknown: true,
+            ..Error::new(
+                "INTERNAL",
+                "Run task panicked; inspect batch receipts before retrying",
+            )
+        };
+        if let Err(persist_error) = engine.store.mutate(&id, |run| {
+            run.state = "FAILED".into();
+            run.commit_unknown = true;
+            run.partial_write = run.rows_committed > 0;
+            run.error = Some(error);
+        }) {
+            tracing::error!(run_id=%id,error=%persist_error,"Could not persist panicked run state; startup will reconcile interruption");
+        }
+    }
+    // A drained engine must no longer have a worker owning the store. Drop that
+    // owner before publishing removal from the active map.
+    let active = engine.active.clone();
+    drop(engine);
+    active.lock().await.remove(&id);
+}
 async fn record_error(slot: &Mutex<Option<Error>>, e: Error) {
     let mut slot = slot.lock().await;
     if slot.is_none()
@@ -460,6 +517,105 @@ mod tests {
         array::Int64Array,
         datatypes::{DataType, Field, Schema},
     };
+
+    #[tokio::test]
+    async fn shutdown_prevents_a_submission_waiting_for_the_active_lock() {
+        let temp = tempfile::tempdir().unwrap();
+        let store = Store::open(temp.path().join("state.sqlite")).unwrap();
+        let engine = Engine::new(store, &ServerConfig::default()).unwrap();
+        let mut config: serde_json::Value =
+            serde_json::from_str(include_str!("../examples/mysql-to-doris.json")).unwrap();
+        for pointer in ["/reader/connection/credentials", "/writer/sql/credentials"] {
+            let credentials = config
+                .pointer_mut(pointer)
+                .unwrap()
+                .as_object_mut()
+                .unwrap();
+            credentials.remove("password_env");
+            credentials.insert("password".into(), serde_json::json!("unit-secret"));
+        }
+        let spec: RunSpec = serde_json::from_value(config).unwrap();
+        spec.validate().unwrap();
+        let active = engine.active.lock().await;
+        let submitting = {
+            let engine = engine.clone();
+            tokio::spawn(async move { engine.submit(spec).await })
+        };
+        tokio::time::timeout(Duration::from_secs(2), async {
+            while engine.admission.available_permits() == 18 {
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        assert!(!engine.shutdown_and_wait(0).await);
+        drop(active);
+        assert_eq!(submitting.await.unwrap().unwrap_err().code, "BUSY");
+        assert!(engine.store.list(10, 0).unwrap().is_empty());
+        assert!(engine.shutdown_and_wait(100).await);
+    }
+
+    #[tokio::test]
+    async fn shutdown_timeout_can_be_retried_after_cancellation_drains() {
+        let temp = tempfile::tempdir().unwrap();
+        let store = Store::open(temp.path().join("state.sqlite")).unwrap();
+        let engine = Engine::new(store, &ServerConfig::default()).unwrap();
+        let token = CancellationToken::new();
+        engine
+            .active
+            .lock()
+            .await
+            .insert("test".into(), token.clone());
+        assert!(!engine.shutdown_and_wait(0).await);
+        assert!(token.is_cancelled());
+        let active = engine.active.clone();
+        let cleanup = tokio::spawn(async move {
+            tokio::time::sleep(Duration::from_millis(5)).await;
+            active.lock().await.remove("test");
+        });
+        assert!(engine.shutdown_and_wait(1000).await);
+        cleanup.await.unwrap();
+        assert!(engine.shutdown_and_wait(u64::MAX).await);
+    }
+
+    #[tokio::test]
+    async fn shutdown_budget_includes_waiting_for_the_active_lock() {
+        let temp = tempfile::tempdir().unwrap();
+        let store = Store::open(temp.path().join("state.sqlite")).unwrap();
+        let engine = Engine::new(store, &ServerConfig::default()).unwrap();
+        let active = engine.active.lock().await;
+        assert!(
+            !tokio::time::timeout(Duration::from_secs(1), engine.shutdown_and_wait(5))
+                .await
+                .unwrap()
+        );
+        drop(active);
+        assert!(engine.shutdown_and_wait(0).await);
+    }
+
+    #[tokio::test]
+    async fn panicked_run_is_recorded_and_does_not_prevent_shutdown() {
+        let temp = tempfile::tempdir().unwrap();
+        let store = Store::open(temp.path().join("state.sqlite")).unwrap();
+        let engine = Engine::new(store, &ServerConfig::default()).unwrap();
+        let spec: RunSpec =
+            serde_json::from_str(include_str!("../examples/mysql-to-doris.json")).unwrap();
+        let (run, _) = engine.store.submit(&spec).unwrap();
+        engine
+            .active
+            .lock()
+            .await
+            .insert(run.run_id.clone(), CancellationToken::new());
+        supervise_run(engine.clone(), run.run_id.clone(), async {
+            panic!("synthetic worker panic");
+        })
+        .await;
+        let failed = engine.store.get(&run.run_id).unwrap();
+        assert_eq!(failed.state, "FAILED");
+        assert_eq!(failed.error.unwrap().code, "INTERNAL");
+        assert!(failed.commit_unknown);
+        assert!(engine.shutdown_and_wait(0).await);
+    }
 
     #[tokio::test]
     async fn slow_writer_backpressure_is_bounded_and_cancel_releases_memory() {

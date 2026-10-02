@@ -1,0 +1,49 @@
+{
+  "package_version": "0.1.0",
+  "installed_package": "D:\\PythonVenv\\Lib\\site-packages\\dunnelean\\__init__.py",
+  "python": "3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]",
+  "cases": [
+    {
+      "case": "installed_wheel_sync_mysql_to_doris_exact_types",
+      "state": "SUCCEEDED",
+      "rows_committed": 47,
+      "commit_unknown": false,
+      "run_id": "e5596cf7-2a1c-4571-8331-81c59f5d4189",
+      "seconds": 0.609
+    },
+    {
+      "case": "cancel_waits_for_real_doris_commit_receipt",
+      "state": "CANCELLED",
+      "rows_committed": 2,
+      "commit_unknown": false,
+      "run_id": "28f4baec-f0b0-4782-8e94-ff9b19590733",
+      "seconds": 0.313,
+      "puts": 1
+    },
+    {
+      "case": "mysql_commit_response_loss_is_not_replayed",
+      "state": "FAILED",
+      "rows_committed": 0,
+      "commit_unknown": true,
+      "run_id": "28a8bb2b-3733-497e-80b1-8bb849daf6fa",
+      "seconds": 0.203,
+      "commits": 1
+    },
+    {
+      "case": "installed_wheel_async_doris_to_mysql_exact_roundtrip",
+      "state": "SUCCEEDED",
+      "rows_committed": 47,
+      "commit_unknown": false,
+      "run_id": "b9086fc0-2183-43e2-9889-51281f07c926",
+      "seconds": 0.375
+    },
+    {
+      "case": "async_waiter_cancellation_requires_explicit_run_cancel",
+      "state": "CANCELLED",
+      "rows_committed": 0,
+      "commit_unknown": false,
+      "run_id": "ffeb0735-715d-4775-9b9e-51269f0c4c7b",
+      "seconds": 0.157
+    }
+  ]
+}

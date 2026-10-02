@@ -5,6 +5,17 @@ edition = "2024"
 rust-version = "1.98"
 description = "Arrow-native MySQL and Doris offline batch synchronization service"
 license = "Apache-2.0"
+include = [
+    "src/**/*.rs", "tests/**/*.rs", "examples/*.json",
+    "sdk/java/src/test/resources/*.json", "Cargo.toml", "Cargo.lock",
+    "rust-toolchain.toml", "dunnelean.toml", "LICENSE", "README.md",
+    "docs/python-sdk.md", "pyproject.toml",
+]
+
+[workspace]
+members = ["sdk/python"]
+default-members = ["."]
+resolver = "3"
 
 [dependencies]
 anyhow = "1"

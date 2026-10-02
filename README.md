@@ -1,6 +1,6 @@
 # Dunnelean
 
-使用 Rust 和 Apache Arrow 编写的本地离线批量同步服务。支持 **MySQL → Doris、Doris → MySQL**，Java 通过 HTTP API 控制作业。
+使用 Rust 和 Apache Arrow 编写的本地离线批量同步工具。支持 **MySQL → Doris、Doris → MySQL**，Python 可直接嵌入 Rust 核心，Java 通过 HTTP API 控制作业。
 
 ```text
 MySQL binary protocol → Arrow RecordBatch → Arrow IPC Stream → Doris Stream Load
@@ -86,6 +86,29 @@ Invoke-RestMethod "http://127.0.0.1:9876/v1/runs/$($run.run_id)"
 Invoke-RestMethod "http://127.0.0.1:9876/v1/runs/$($run.run_id)/cancel" -Method Post
 ```
 
+### Python 3.10+ 嵌入式库
+
+Python 库直接在当前进程中执行同步。源码安装需要上文的 Rust 与本机编译工具；安装已构建的 wheel 无需 Rust。项目尚未发布到 PyPI，在仓库根目录安装：
+
+```powershell
+& 'D:\PythonVenv\Scripts\python.exe' -m pip install .
+```
+
+```python
+import json
+from pathlib import Path
+from uuid import uuid4
+from dunnelean import Engine
+
+spec = json.loads(Path("examples/mysql-to-doris.json").read_text(encoding="utf-8"))
+spec["request_id"] = str(uuid4())
+with Engine("var/python-jobs.sqlite") as engine:
+    result = engine.run(spec, timeout=300)
+    print(result["state"], result["rows_committed"])
+```
+
+`password_env` 由当前 Python 进程读取；目标表需预先存在。`AsyncEngine` 支持 asyncio，返回普通 dict/list，保留按批次提交、幂等和可靠取消语义。`with` / `async with` 退出时取消活动任务并等待收尾。安装、完整接口、关闭超时和四平台 CI 见 [Python 库文档](docs/python-sdk.md)，示例在 [examples/python](examples/python)。
+
 ### Java 17+ 类型化 SDK
 
 SDK 提供不可变配置、builder、同步和 `CompletableFuture` 异步调用，可直接作为 Java 项目依赖：
@@ -135,6 +158,7 @@ Java 只传配置并轮询状态，无需 Arrow/JDBC 依赖。需要可靠处理
 - [内核结构](docs/architecture.md)
 - [数据类型与运行语义](docs/semantics.md)
 - [工作台可靠控制协议](docs/studio-control.md)
+- [Python 嵌入式库与同步/异步示例](docs/python-sdk.md)
 - [Java SDK 与独立 Maven 示例](docs/java-sdk.md)
 - [Doris 部署说明](docs/deployment.md)
 - [实测验收报告](docs/acceptance.md)
