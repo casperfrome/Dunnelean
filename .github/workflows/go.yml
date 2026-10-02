@@ -47,21 +47,24 @@ jobs:
         with:
           python-version: "3.10"
       - name: Build on manylinux2014 (glibc 2.17)
-        if: matrix.platform.name == 'linux_amd64'
+        if: matrix.platform.name == 'linux_amd64' && hashFiles('sdk/go/internal/nativeassets/manifest.json') == ''
         shell: bash
         run: |
           docker run --rm -v "$GITHUB_WORKSPACE:/work" -w /work \
-            -e CARGO_BUILD_JOBS -e PYTHONUTF8 \
+            -e CARGO_BUILD_JOBS -e PYTHONUTF8 -e GITHUB_SHA \
             quay.io/pypa/manylinux2014_x86_64 \
             bash -ec 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.1
             export PATH="$HOME/.cargo/bin:$PATH"
             /opt/python/cp310-cp310/bin/python scripts/build-go-native.py build --target x86_64-unknown-linux-gnu --out dist/go-native'
       - name: Install pinned Rust toolchain
-        if: matrix.platform.name != 'linux_amd64'
+        if: matrix.platform.name != 'linux_amd64' && hashFiles('sdk/go/internal/nativeassets/manifest.json') == ''
         run: rustup toolchain install 1.98.1 --profile minimal
       - name: Build and verify native dependencies
-        if: matrix.platform.name != 'linux_amd64'
+        if: matrix.platform.name != 'linux_amd64' && hashFiles('sdk/go/internal/nativeassets/manifest.json') == ''
         run: python scripts/build-go-native.py build --target ${{ matrix.platform.target }} --out dist/go-native
+      - name: Verify actual committed native library and dependencies
+        if: hashFiles('sdk/go/internal/nativeassets/manifest.json') != ''
+        run: python scripts/build-go-native.py verify-platform --target ${{ matrix.platform.target }} --out dist/go-native
       - uses: actions/upload-artifact@v4
         with:
           name: go-native-${{ matrix.platform.name }}
@@ -117,7 +120,16 @@ jobs:
               args = ["assemble", "--artifacts", "dist/go-native", "--sdk", "sdk/go"]
           subprocess.run([sys.executable, "scripts/build-go-native.py", *args], check=True)
       - name: Test installed module and a fresh offline CGO_ENABLED=0 consumer
-        run: python scripts/verify-go-package.py --report dist/go-installed-${{ matrix.platform.name }}-${{ matrix.go }}.json
+        shell: python
+        run: |
+          import os
+          import subprocess
+          import sys
+
+          args = ["--report", "dist/go-installed-${{ matrix.platform.name }}-${{ matrix.go }}.json"]
+          if os.environ["GITHUB_REF"].startswith("refs/tags/sdk/go/"):
+              args += ["--published", "--version", os.environ["GITHUB_REF_NAME"].removeprefix("sdk/go/")]
+          subprocess.run([sys.executable, "scripts/verify-go-package.py", *args], check=True)
       - uses: actions/upload-artifact@v4
         with:
           name: go-installed-${{ matrix.platform.name }}-${{ matrix.go }}
@@ -156,7 +168,16 @@ jobs:
                   else ["assemble", "--artifacts", "dist/go-native"])
           subprocess.run([sys.executable, "scripts/build-go-native.py", *args], check=True)
       - name: Check Go-side concurrency with the race detector
-        run: python scripts/verify-go-package.py --race --report dist/go-race.json
+        shell: python
+        run: |
+          import os
+          import subprocess
+          import sys
+
+          args = ["--race", "--report", "dist/go-race.json"]
+          if os.environ["GITHUB_REF"].startswith("refs/tags/sdk/go/"):
+              args += ["--published", "--version", os.environ["GITHUB_REF_NAME"].removeprefix("sdk/go/")]
+          subprocess.run([sys.executable, "scripts/verify-go-package.py", *args], check=True)
       - uses: actions/upload-artifact@v4
         with:
           name: go-race-linux-amd64

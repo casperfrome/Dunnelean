@@ -7,6 +7,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -135,6 +136,77 @@ func TestLifecycleIdentityExclusiveStore(t *testing.T) {
 	defer reopened.Close(background)
 	if reopened.StateStoreID() != id || e.StateStoreID() != id {
 		t.Fatal("identity changed across close/reopen")
+	}
+}
+func TestCrossProcessStateStoreExclusive(t *testing.T) {
+	if path := os.Getenv("DUNNELEAN_GO_LOCK_SMOKE"); path != "" {
+		engine, err := Open(background, path)
+		if os.Getenv("DUNNELEAN_GO_LOCK_ID") == "" {
+			if engine != nil {
+				engine.Close(background)
+				t.Fatal("another process acquired live store")
+			}
+			requireCode(t, err, "STATE_STORE")
+			return
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer engine.Close(background)
+		if engine.StateStoreID() != os.Getenv("DUNNELEAN_GO_LOCK_ID") {
+			t.Fatal("reopen identity differs")
+		}
+		return
+	}
+	e, path := openTest(t)
+	check := func(id string) {
+		child := exec.Command(os.Args[0], "-test.run=^TestCrossProcessStateStoreExclusive$", "-test.v")
+		child.Env = append(os.Environ(), "DUNNELEAN_GO_LOCK_SMOKE="+path, "DUNNELEAN_GO_LOCK_ID="+id)
+		if output, err := child.CombinedOutput(); err != nil {
+			t.Fatalf("state owner consumer: %v\n%s", err, output)
+		}
+	}
+	check("")
+	if err := e.Close(background); err != nil {
+		t.Fatal(err)
+	}
+	check(e.StateStoreID())
+}
+func TestProcessInterruptionPersistsAuditWithoutReplay(t *testing.T) {
+	if path := os.Getenv("DUNNELEAN_GO_INTERRUPT_SMOKE"); path != "" {
+		engine, err := Open(background, path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err = engine.Submit(background, json.RawMessage(os.Getenv("DUNNELEAN_GO_INTERRUPT_JOB"))); err != nil {
+			t.Fatal(err)
+		}
+		// Model application termination without running deferred Close or GC.
+		os.Exit(0)
+	}
+	p := stalled(t)
+	spec := peerJob(p, "interrupted-request")
+	path := filepath.Join(t.TempDir(), "interrupted.sqlite")
+	child := exec.Command(os.Args[0], "-test.run=^TestProcessInterruptionPersistsAuditWithoutReplay$", "-test.v")
+	child.Env = append(os.Environ(), "DUNNELEAN_GO_INTERRUPT_SMOKE="+path, "DUNNELEAN_GO_INTERRUPT_JOB="+string(spec))
+	if output, err := child.CombinedOutput(); err != nil {
+		t.Fatalf("interrupted consumer: %v\n%s", err, output)
+	}
+	e, err := Open(background, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer e.Close(background)
+	request, err := e.GetRequest(background, "interrupted-request")
+	if err != nil || request.Run == nil {
+		t.Fatalf("missing interrupted request: %+v %v", request, err)
+	}
+	if request.Run.State != "INTERRUPTED" || request.Run.Error == nil || request.Run.Error.Code != "INTERRUPTED" || request.Run.RowsCommitted != 0 || request.Run.CommitUnknown {
+		t.Fatalf("wrong interruption audit: %+v", request.Run)
+	}
+	replayed, err := e.Submit(background, spec)
+	if err != nil || replayed.RunID != request.Run.RunID || replayed.State != "INTERRUPTED" {
+		t.Fatalf("interrupted request replayed: %+v %v", replayed, err)
 	}
 }
 func TestConfigContractAndProcessEnvironment(t *testing.T) {

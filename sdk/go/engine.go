@@ -87,6 +87,7 @@ func (o *handleOwner) close(timeout time.Duration) error {
 
 // Engine owns an independent Rust engine, SQLite store and Tokio runtime.
 // Call Close explicitly. Garbage collection supplies background cleanup only.
+// An Engine must not be copied after first use; retain and pass its pointer.
 type Engine struct {
 	owner        *handleOwner
 	stateStoreID string

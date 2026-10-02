@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -108,10 +109,20 @@ func TestUnwritableCacheDirectory(t *testing.T) {
 	requireCode(t, err, "NATIVE_CACHE")
 }
 func TestFreshCustomCacheLoadsActualEngine(t *testing.T) {
+	if cache := os.Getenv("DUNNELEAN_GO_CACHE_SMOKE"); cache != "" {
+		e, _ := openTest(t, WithNativeCacheDir(cache))
+		if err := e.Ready(background); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
 	cache := filepath.Join(t.TempDir(), "libraries")
-	e, _ := openTest(t, WithNativeCacheDir(cache))
-	if err := e.Ready(background); err != nil {
-		t.Fatal(err)
+	// A loaded DLL intentionally survives all Engines. Use a child process so
+	// Windows can remove the temporary native cache after the process exits.
+	child := exec.Command(os.Args[0], "-test.run=^TestFreshCustomCacheLoadsActualEngine$", "-test.v")
+	child.Env = append(os.Environ(), "DUNNELEAN_GO_CACHE_SMOKE="+cache)
+	if output, err := child.CombinedOutput(); err != nil {
+		t.Fatalf("fresh cache consumer: %v\n%s", err, output)
 	}
 	_, a, err := platformAsset()
 	if err != nil {

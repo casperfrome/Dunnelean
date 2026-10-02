@@ -92,7 +92,7 @@ func main() {
 
 ## goroutine、context 和幂等
 
-每个实例持有独立的 Rust Engine、SQLite Store 和多线程 Tokio runtime。阻塞原生调用不会阻止其他 goroutine 调度，`Engine` 可供多个 goroutine 并发使用。需要后台运行时，直接在 goroutine 中调用现有接口：
+每个实例持有独立的 Rust Engine、SQLite Store 和多线程 Tokio runtime。始终保存和传递 `*Engine`，不要复制已使用的 Engine 值。阻塞原生调用不会阻止其他 goroutine 调度，同一实例可供多个 goroutine 并发使用。需要后台运行时，直接在 goroutine 中调用现有接口：
 
 ```go
 go func() {
@@ -174,7 +174,7 @@ go run ./sync -spec ../mysql-to-doris.json -validate-only
 
 `offline` 无需数据库，验证内嵌引擎打开、取消记录、关闭与重开；`sync` 需要可连接的数据库和密码环境变量，打印 request ID、状态库身份及完整运行。`-request-id` 可指定业务请求 ID，省略时为本次执行生成新 ID。示例不打印原始配置密码。
 
-[Go CI](https://github.com/casperfrome/Dunnelean/blob/main/.github/workflows/go.yml) 构建四平台原生库，在 Go 1.25/1.26/1.27 上从标准 module ZIP 安装到全新仓库外项目，运行自包含测试和 `go vet`，然后 vendor、清空构建缓存，在 `GOPROXY=off` 和 `CGO_ENABLED=0` 下重建并运行离线示例。Linux 单独用 C 编译器运行 Go race detector；这不意味着应用需要 C 编译器，也不检测 Rust 内存竞争。
+[Go CI](https://github.com/casperfrome/Dunnelean/blob/main/.github/workflows/go.yml) 在首次缺少发布资产时构建四平台原生库；资产已提交后，在各平台核对实际库的源码哈希、完整性与动态依赖。在 Go 1.25/1.26/1.27 上从标准 module ZIP 安装到全新仓库外项目，运行自包含测试和 `go vet`，然后 vendor、清空构建缓存，在 `GOPROXY=off` 和 `CGO_ENABLED=0` 下重建并运行离线示例。正式 tag 的 CI 使用公共 `go get`；Linux 单独用 C 编译器运行 Go race detector，这不意味着应用需要 C 编译器，也不检测 Rust 内存竞争。
 
 真实 MySQL/Doris 验收使用独立测试库、临时唯一表以及行级核对。报告通过 `scripts/integration-go.py` 生成，覆盖双向同步、取消、COMMIT 回执丢失、计数与不重放。CI 使用本地模拟端点，并不声明完成真实数据库验收。
 

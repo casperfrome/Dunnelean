@@ -16,6 +16,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
 
 PLATFORMS = {
@@ -73,7 +74,7 @@ def dumpbin_path() -> str:
     base = Path(os.environ.get("ProgramFiles(x86)", "C:/Program Files (x86)"))
     locator = base / "Microsoft Visual Studio/Installer/vswhere.exe"
     if locator.is_file():
-        installation = run([str(locator), "-latest", "-requires",
+        installation = run([str(locator), "-latest", "-products", "*", "-requires",
                             "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
                             "-property", "installationPath"], cwd=Path.cwd()).strip()
         if installation:
@@ -159,7 +160,7 @@ def build(arguments: argparse.Namespace) -> None:
         raise ValueError("Native library must be nonempty and no larger than 100 MiB")
     if source_hash(repository) != before:
         raise ValueError("Native sources changed during the build; rebuild from a stable commit")
-    source_commit = arguments.source_commit or run(
+    source_commit = arguments.source_commit or os.environ.get("GITHUB_SHA") or run(
         ["git", "rev-parse", "HEAD"], cwd=repository).strip()
     if not re.fullmatch(r"[0-9a-f]{40}", source_commit):
         raise ValueError("source_commit must be a full lowercase Git commit SHA")
@@ -256,6 +257,26 @@ def assemble(arguments: argparse.Namespace) -> None:
     verify(arguments)
 
 
+def verify_platform(arguments: argparse.Namespace) -> None:
+    """Inspect the actual committed binary, without recompiling or re-signing it."""
+    verify(arguments)
+    directory = arguments.sdk.resolve() / "internal/nativeassets"
+    document = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
+    asset = next(value for value in document["assets"] if value["target"] == arguments.target)
+    with tempfile.TemporaryDirectory(prefix="dunnelean-native-inspect-") as temporary:
+        library = Path(temporary) / asset["library"]
+        library.write_bytes(gzip.decompress((directory / asset["file"]).read_bytes()))
+        dependencies = check_dependencies(library, arguments.target, arguments.repo.resolve())
+    if {name.lower() for name in dependencies} != {name.lower() for name in asset["dependencies"]}:
+        raise ValueError("Committed binary dependencies differ from its release manifest")
+    arguments.out.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(directory / asset["file"], arguments.out / asset["file"])
+    document["assets"] = [asset]
+    (arguments.out / f"{asset['goos']}_{asset['goarch']}.json").write_text(
+        json.dumps(document, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"Verified committed {asset['goos']}/{asset['goarch']} binary and native dependencies")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[1])
@@ -273,6 +294,11 @@ def main() -> int:
         if name == "assemble":
             child.add_argument("--artifacts", type=Path, required=True)
         child.set_defaults(action=action)
+    inspector = subparsers.add_parser("verify-platform", help="Inspect a committed library on its target OS")
+    inspector.add_argument("--sdk", type=Path, default=Path("sdk/go"))
+    inspector.add_argument("--target", choices=PLATFORMS, required=True)
+    inspector.add_argument("--out", type=Path, default=Path("dist/go-native"))
+    inspector.set_defaults(action=verify_platform)
     arguments = parser.parse_args()
     try:
         arguments.action(arguments)
