@@ -151,7 +151,7 @@ API 错误可用 `errors.As` 读取 `*dunnelean.Error` 的 `Code`、`Message`、
 
 一个状态库同一时间只允许一个拥有者，包括 Go/Python 实例和 HTTP 服务。锁冲突报 `STATE_STORE`；应用应给不同实例使用不同持久文件。成功 `Close` 等待任务及进行中的调用退出，随后释放状态库锁；立即重开同一路径有效。重复关闭安全返回。
 
-关闭超时保留 runtime/Store 和文件锁，仍允许查询、取消和再次关闭；提交与验证报 `ENGINE_CLOSING`。关闭完成后其他实例方法报 `ENGINE_CLOSED`。取消 `Close` 的 context 不会撤销已经发出的关闭；原生关闭仍按本次预算继续收尾，再次 `Close` 可确认结果。
+关闭超时保留 runtime/Store 和文件锁，仍允许查询、取消和再次关闭；提交与验证报 `ENGINE_CLOSING`。关闭完成后其他实例方法报 `ENGINE_CLOSED`。提交与关闭同时发生时，已进入核心的提交还可能保留原有的 `BUSY: Service is shutting down` 拒绝结果。取消 `Close` 的 context 不会撤销已经发出的关闭；原生关闭仍按本次预算继续收尾，再次 `Close` 可确认结果。
 
 ```go
 if err := engine.Close(shortCtx); err != nil {
@@ -180,6 +180,8 @@ go run ./sync -spec ../mysql-to-doris.json -validate-only
 [Go CI](https://github.com/casperfrome/Dunnelean/blob/main/.github/workflows/go.yml) 在首次缺少发布资产时构建四平台原生库；资产已提交后，在各平台核对实际库的源码哈希、完整性与动态依赖。在 Go 1.25/1.26/1.27 上从标准 module ZIP 安装到全新仓库外项目，运行自包含测试和 `go vet`，然后 vendor、清空构建缓存，在 `GOPROXY=off` 和 `CGO_ENABLED=0` 下重建并运行离线示例。正式 tag 的 CI 使用公共 `go get`；Linux 单独用 C 编译器运行 Go race detector，这不意味着应用需要 C 编译器，也不检测 Rust 内存竞争。
 
 真实 MySQL/Doris 验收使用独立测试库、临时唯一表以及行级核对。报告通过 `scripts/integration-go.py` 生成，覆盖双向同步、取消、COMMIT 回执丢失、计数与不重放。CI 使用本地模拟端点，并不声明完成真实数据库验收。
+
+[v0.1.0 验收记录](acceptance-go.md) 分别保存四平台安装结果、真实数据库结果和 Rust/Python/Java 回归结果。
 
 维护者才需要 Python、Rust 和本机编译工具。Windows 本地 Python 命令统一使用 `D:\PythonVenv\Scripts\python.exe`；32 位 Go 不能作为首版执行验收，需要独立的 64 位 Go 安装。构建示例：
 
