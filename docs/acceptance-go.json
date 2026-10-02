@@ -83,5 +83,88 @@
       "version": "0.1.0"
     },
     "result": "passed"
-  }
+  },
+  "release_url": "https://github.com/casperfrome/Dunnelean/releases/tag/sdk/go/v0.1.0",
+  "tag": "sdk/go/v0.1.0",
+  "tag_commit": "c4e0ab039aeb1d8ae0d98af3fe44b5db85f46c15",
+  "public_installation": {
+    "module": "github.com/casperfrome/Dunnelean/sdk/go",
+    "version": "v0.1.0",
+    "go": "go version go1.27.1 windows/amd64",
+    "platform": "windows_amd64",
+    "published": true,
+    "race": false,
+    "module_directory": "C:\\Users\\zevro\\AppData\\Local\\Temp\\dunnelean-go-installed-0pzy9dei\\modules\\github.com\\casperfrome\\!dunnelean\\sdk\\go@v0.1.0",
+    "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+    "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+    "offline": {
+      "offline": true,
+      "pid": 20436,
+      "reopened": true,
+      "state_store_id": "748af874-ab4e-40d7-9ce8-bc31d03e504f",
+      "version": "0.1.0"
+    },
+    "result": "passed"
+  },
+  "public_database": {
+    "package_version": "0.1.0",
+    "go": "go version go1.27.1 windows/amd64",
+    "cgo_enabled": false,
+    "module": {
+      "Path": "github.com/casperfrome/Dunnelean/sdk/go",
+      "Version": "v0.1.0",
+      "Time": "2026-10-02T06:35:57Z",
+      "Dir": "C:\\Users\\zevro\\AppData\\Local\\Temp\\dunnelean-go-acceptance-kx_76z29\\module-cache\\github.com\\casperfrome\\!dunnelean\\sdk\\go@v0.1.0",
+      "GoMod": "C:\\Users\\zevro\\AppData\\Local\\Temp\\dunnelean-go-acceptance-kx_76z29\\module-cache\\cache\\download\\github.com\\casperfrome\\!dunnelean\\sdk\\go\\@v\\v0.1.0.mod",
+      "GoVersion": "1.25.0",
+      "Sum": "h1:CJHFHlFWlyEyZj7xFnqCUkJc2FPDNVV88y5toetdXtw=",
+      "GoModSum": "h1:vXMhJJPUYdCmQ4CRyPJCT121uQ9NAA13iYwTsaC4XQU="
+    },
+    "cases": [
+      {
+        "case": "go_sync_mysql_to_doris_exact_types",
+        "state": "SUCCEEDED",
+        "rows_committed": 47,
+        "commit_unknown": false,
+        "run_id": "ee6dbc80-2add-463b-8acc-832dad0d93a9",
+        "seconds": 0.531
+      },
+      {
+        "case": "go_goroutine_doris_to_mysql_exact_roundtrip",
+        "state": "SUCCEEDED",
+        "rows_committed": 47,
+        "commit_unknown": false,
+        "run_id": "74835068-6e62-4846-92c3-89fc93508e2d",
+        "seconds": 0.625,
+        "heartbeat_ticks": 95
+      },
+      {
+        "case": "go_mysql_commit_response_loss_is_not_replayed",
+        "state": "FAILED",
+        "rows_committed": 0,
+        "commit_unknown": true,
+        "run_id": "b7dc7311-64f2-4f8f-8f4a-a0b959bc4b55",
+        "seconds": 0.25,
+        "commits": 1
+      },
+      {
+        "case": "go_context_cancellation_requires_explicit_run_cancel",
+        "state": "CANCELLED",
+        "rows_committed": 0,
+        "commit_unknown": false,
+        "run_id": "b7141723-f44c-4270-82ef-9b8927cbbaeb",
+        "seconds": 0.078
+      },
+      {
+        "case": "go_close_timeout_retains_real_commit_receipt_and_retries",
+        "state": "CANCELLED",
+        "rows_committed": 2,
+        "commit_unknown": false,
+        "run_id": "62bb198e-b00b-497f-9c0a-b33ca6b25a5c",
+        "seconds": 0.485,
+        "puts": 1
+      }
+    ]
+  },
+  "verified_at": "2026-10-02T06:41:18.410228+00:00"
 }

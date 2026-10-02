@@ -1,6 +1,6 @@
 # Go v0.1.0 验收记录
 
-2026-10-02 完成预发布验收。原生库源提交为 `53ae345a452aac583ec4a524a09cc3a8f0e49d53`，ABI 为 1。四平台资产以普通 Git 文件保存，Go module 大小为 30,648,872 字节，低于 500 MiB 的 ZIP 上限。
+2026-10-02 完成发布验收。原生库源提交为 `53ae345a452aac583ec4a524a09cc3a8f0e49d53`，ABI 为 1。四平台资产以普通 Git 文件保存，Go module 大小为 30,648,872 字节，低于 500 MiB 的 ZIP 上限。
 
 [源构建 CI](https://github.com/casperfrome/Dunnelean/actions/runs/36971677790) 完成四平台构建；[实际提交资产 CI](https://github.com/casperfrome/Dunnelean/actions/runs/36973613114) 的 17 项检查全部通过，包括四平台原生依赖检查、12 组实际 module 安装及离线构建，以及 Linux Go race 检查。
 
@@ -28,3 +28,7 @@ SDK 自包含测试覆盖配置兼容和未知字段、幂等冲突/墓碑、跨
 既有回归：Rust 33 项测试、format 和 Clippy 全部通过；实际 Python wheel 31 项测试、仓库外 sdist 重建 wheel 后再次 31 项测试通过，四平台/Python 3.10–3.14 的 24 个 CI jobs 全部通过；Python 五项真实数据库验收通过；Java 42 项单元测试与 1 项真实 Rust HTTP 集成通过。
 
 详细记录：[Go CI](acceptance-go-ci.json)、[Go 数据库及安装](acceptance-go.json)、[Rust/Python/Java 回归](acceptance-go-regressions.json)。
+
+不可变标签 `sdk/go/v0.1.0` 指向 `c4e0ab039aeb1d8ae0d98af3fe44b5db85f46c15`，已创建 [GitHub Release](https://github.com/casperfrome/Dunnelean/releases/tag/sdk/go/v0.1.0)。[正式标签公开安装 CI](https://github.com/casperfrome/Dunnelean/actions/runs/36974394473) 的 17 项检查全部通过；12 组安装与 Linux race 均从公共分发执行真实 `go get @v0.1.0`，报告全部 `published:true`。
+
+本机也从仓库外、空 module cache 安装公共版本，无本地 replace，完整测试、vet、全新原生缓存、空缓存离线构建通过；用同一公共版本再次执行上述五项真实数据库验收，全部通过。原有 32 位 Go 安装未被覆盖，本机验收使用独立的官方 Go 1.27.1 windows/amd64。
