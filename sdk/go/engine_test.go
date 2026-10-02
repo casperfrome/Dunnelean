@@ -447,20 +447,59 @@ func TestCancelledValidationKeepsGoroutinesResponsive(t *testing.T) {
 }
 func TestConcurrentSubmitAndClose(t *testing.T) {
 	for i := 0; i < 8; i++ {
-		e, _ := openTest(t)
+		e, path := openTest(t)
 		p := stalled(t)
 		start := make(chan struct{})
-		done := make(chan error, 1)
-		go func() { <-start; _, err := e.Submit(background, peerJob(p, "race")); done <- err }()
+		done := make(chan struct {
+			run *Run
+			err error
+		}, 1)
+		go func() {
+			<-start
+			run, err := e.Submit(background, peerJob(p, "race"))
+			done <- struct {
+				run *Run
+				err error
+			}{run, err}
+		}()
 		close(start)
 		if err := e.Close(background); err != nil {
 			t.Fatal(err)
 		}
-		if err := <-done; err != nil {
+		result := <-done
+		if result.err != nil {
 			var failure *Error
-			if !errors.As(err, &failure) || (failure.Code != "ENGINE_CLOSED" && failure.Code != "ENGINE_CLOSING") {
-				t.Fatal(err)
+			if !errors.As(result.err, &failure) {
+				t.Fatal(result.err)
 			}
+			// A binding lease can enter before host closing, then the core's
+			// admission recheck observes shutdown. Preserve that existing BUSY
+			// result while distinguishing it from queue-capacity failures.
+			shutdownBusy := failure.Code == "BUSY" && failure.Message == "Service is shutting down"
+			if (!shutdownBusy && failure.Code != "ENGINE_CLOSED" && failure.Code != "ENGINE_CLOSING") || failure.CommitUnknown || failure.Retryable {
+				t.Fatal(result.err)
+			}
+		}
+		// Successful close must release the store and fully audit every accepted
+		// run. Reopening would reveal INTERRUPTED if shutdown missed a submit.
+		reopened, err := Open(background, path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		runs, err := reopened.ListRuns(background, 50, 0)
+		closeErr := reopened.Close(background)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if closeErr != nil {
+			t.Fatal(closeErr)
+		}
+		if result.err == nil {
+			if result.run == nil || len(runs) != 1 || runs[0].RunID != result.run.RunID || runs[0].State != "CANCELLED" || runs[0].RowsCommitted != 0 || runs[0].CommitUnknown {
+				t.Fatalf("close missed accepted submission: %+v", runs)
+			}
+		} else if len(runs) != 0 {
+			t.Fatalf("rejected submission persisted a run: %+v", runs)
 		}
 	}
 }

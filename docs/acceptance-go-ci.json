@@ -1,0 +1,465 @@
+{
+  "package_version": "0.1.0",
+  "verified_at": "2026-10-02T06:22:05.394327+00:00",
+  "source_build": {
+    "commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+    "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790",
+    "result": "success",
+    "jobs": [
+      {
+        "name": "Native (windows_amd64)",
+        "databaseId": 110726766506,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110726766506"
+      },
+      {
+        "name": "Native (darwin_arm64)",
+        "databaseId": 110726766665,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110726766665"
+      },
+      {
+        "name": "Native (linux_amd64)",
+        "databaseId": 110726766692,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110726766692"
+      },
+      {
+        "name": "Native (darwin_amd64)",
+        "databaseId": 110726766694,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110726766694"
+      },
+      {
+        "name": "Go race detector (Linux amd64)",
+        "databaseId": 110729569862,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110729569862"
+      },
+      {
+        "name": "Installed module (linux_amd64, Go 1.26.x)",
+        "databaseId": 110729570010,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110729570010"
+      },
+      {
+        "name": "Installed module (linux_amd64, Go 1.27.x)",
+        "databaseId": 110729570014,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110729570014"
+      },
+      {
+        "name": "Installed module (windows_amd64, Go 1.25.x)",
+        "databaseId": 110729570027,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110729570027"
+      },
+      {
+        "name": "Installed module (darwin_amd64, Go 1.27.x)",
+        "databaseId": 110729570033,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110729570033"
+      },
+      {
+        "name": "Installed module (linux_amd64, Go 1.25.x)",
+        "databaseId": 110729570052,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110729570052"
+      },
+      {
+        "name": "Installed module (darwin_amd64, Go 1.26.x)",
+        "databaseId": 110729570053,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110729570053"
+      },
+      {
+        "name": "Installed module (windows_amd64, Go 1.27.x)",
+        "databaseId": 110729570065,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110729570065"
+      },
+      {
+        "name": "Installed module (darwin_arm64, Go 1.25.x)",
+        "databaseId": 110729570071,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110729570071"
+      },
+      {
+        "name": "Installed module (darwin_amd64, Go 1.25.x)",
+        "databaseId": 110729570078,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110729570078"
+      },
+      {
+        "name": "Installed module (windows_amd64, Go 1.26.x)",
+        "databaseId": 110729570096,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110729570096"
+      },
+      {
+        "name": "Installed module (darwin_arm64, Go 1.27.x)",
+        "databaseId": 110729570106,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110729570106"
+      },
+      {
+        "name": "Installed module (darwin_arm64, Go 1.26.x)",
+        "databaseId": 110729570225,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/casperfrome/Dunnelean/actions/runs/36971677790/job/110729570225"
+      }
+    ]
+  },
+  "native_manifest": {
+    "schema_version": 1,
+    "version": "0.1.0",
+    "abi_version": 1,
+    "source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+    "source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+    "assets": [
+      {
+        "goos": "darwin",
+        "goarch": "amd64",
+        "target": "x86_64-apple-darwin",
+        "file": "darwin_amd64.gz",
+        "library": "libdunnelean_native.dylib",
+        "size": 20644848,
+        "sha256": "6f01eee65045a97c2de22d9c190af5d7be42d74b3e3a1b0add2b90b014a7eea5",
+        "compressed_size": 7709985,
+        "compressed_sha256": "cfeb0054299083f320465a2513fc120fd4230f8e23b1b240377de1a578ff9f0e",
+        "dependencies": [
+          "/System/Library/Frameworks/Security.framework/Versions/A/Security",
+          "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation",
+          "/usr/lib/libiconv.2.dylib",
+          "/usr/lib/libSystem.B.dylib"
+        ]
+      },
+      {
+        "goos": "darwin",
+        "goarch": "arm64",
+        "target": "aarch64-apple-darwin",
+        "file": "darwin_arm64.gz",
+        "library": "libdunnelean_native.dylib",
+        "size": 18720560,
+        "sha256": "da4aaecbf1d16b651a8d147625c4cfdb83b2a0c66f1a74320af0a8144e96f04e",
+        "compressed_size": 6974368,
+        "compressed_sha256": "ef846ee297a909248217f685eac3d5e83f6a920ef1b037a6192b4b09ba85f6ee",
+        "dependencies": [
+          "/System/Library/Frameworks/Security.framework/Versions/A/Security",
+          "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation",
+          "/usr/lib/libiconv.2.dylib",
+          "/usr/lib/libSystem.B.dylib"
+        ]
+      },
+      {
+        "goos": "linux",
+        "goarch": "amd64",
+        "target": "x86_64-unknown-linux-gnu",
+        "file": "linux_amd64.gz",
+        "library": "libdunnelean_native.so",
+        "size": 22761760,
+        "sha256": "c9a3a85aef57d1325a55870ad7b274ef977603b45b01a85a9b0d3471b36b037c",
+        "compressed_size": 8030046,
+        "compressed_sha256": "ab65b3d726930131b767396738943937007597673a05f184f9e8cdaa3fd28153",
+        "dependencies": [
+          "ld-linux-x86-64.so.2",
+          "libc.so.6",
+          "libdl.so.2",
+          "libgcc_s.so.1",
+          "libm.so.6",
+          "libpthread.so.0",
+          "librt.so.1"
+        ]
+      },
+      {
+        "goos": "windows",
+        "goarch": "amd64",
+        "target": "x86_64-pc-windows-msvc",
+        "file": "windows_amd64.gz",
+        "library": "dunnelean_native.dll",
+        "size": 23958528,
+        "sha256": "43cab10d1d33f11cedb725987d493c670ec25297cf9c697a7c45b044c825f5f6",
+        "compressed_size": 7854962,
+        "compressed_sha256": "391720b64b97257b237f28980f6f89f4a5f7d6469e1123efade30ff0a985ac4b",
+        "dependencies": [
+          "KERNEL32.dll",
+          "WS2_32.dll",
+          "advapi32.dll",
+          "api-ms-win-core-synch-l1-2-0.dll",
+          "bcrypt.dll",
+          "bcryptprimitives.dll",
+          "crypt32.dll",
+          "kernel32.dll",
+          "ntdll.dll",
+          "ws2_32.dll"
+        ]
+      }
+    ]
+  },
+  "source_installation_reports": [
+    {
+      "module": "github.com/casperfrome/Dunnelean/sdk/go",
+      "version": "v0.1.0",
+      "go": "go version go1.25.14 darwin/amd64",
+      "platform": "darwin_amd64",
+      "published": false,
+      "race": false,
+      "module_directory": "/private/var/folders/20/jp1_0n3n7kndh6rnbqb5344m0000gn/T/dunnelean-go-installed-k5wff8qd/modules/github.com/casperfrome/!dunnelean/sdk/go@v0.1.0",
+      "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+      "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+      "offline": {
+        "offline": true,
+        "pid": 7735,
+        "reopened": true,
+        "state_store_id": "82ccfb99-8327-4d32-b991-783f54b149b0",
+        "version": "0.1.0"
+      },
+      "result": "passed"
+    },
+    {
+      "module": "github.com/casperfrome/Dunnelean/sdk/go",
+      "version": "v0.1.0",
+      "go": "go version go1.26.7 darwin/amd64",
+      "platform": "darwin_amd64",
+      "published": false,
+      "race": false,
+      "module_directory": "/private/var/folders/20/jp1_0n3n7kndh6rnbqb5344m0000gn/T/dunnelean-go-installed-0a8g1x4q/modules/github.com/casperfrome/!dunnelean/sdk/go@v0.1.0",
+      "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+      "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+      "offline": {
+        "offline": true,
+        "pid": 41885,
+        "reopened": true,
+        "state_store_id": "aaaca7b0-e0ec-4edd-a668-80da25cea9d0",
+        "version": "0.1.0"
+      },
+      "result": "passed"
+    },
+    {
+      "module": "github.com/casperfrome/Dunnelean/sdk/go",
+      "version": "v0.1.0",
+      "go": "go version go1.27.1 darwin/amd64",
+      "platform": "darwin_amd64",
+      "published": false,
+      "race": false,
+      "module_directory": "/private/var/folders/20/jp1_0n3n7kndh6rnbqb5344m0000gn/T/dunnelean-go-installed-1rhxkv65/modules/github.com/casperfrome/!dunnelean/sdk/go@v0.1.0",
+      "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+      "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+      "offline": {
+        "offline": true,
+        "pid": 3982,
+        "reopened": true,
+        "state_store_id": "40f79488-fee5-49e2-b94c-87cb3ee733e9",
+        "version": "0.1.0"
+      },
+      "result": "passed"
+    },
+    {
+      "module": "github.com/casperfrome/Dunnelean/sdk/go",
+      "version": "v0.1.0",
+      "go": "go version go1.25.14 darwin/arm64",
+      "platform": "darwin_arm64",
+      "published": false,
+      "race": false,
+      "module_directory": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/dunnelean-go-installed-7pchnpfm/modules/github.com/casperfrome/!dunnelean/sdk/go@v0.1.0",
+      "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+      "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+      "offline": {
+        "offline": true,
+        "pid": 3388,
+        "reopened": true,
+        "state_store_id": "8a5992f2-cb45-43d4-9baf-b59f41e1b854",
+        "version": "0.1.0"
+      },
+      "result": "passed"
+    },
+    {
+      "module": "github.com/casperfrome/Dunnelean/sdk/go",
+      "version": "v0.1.0",
+      "go": "go version go1.26.8 darwin/arm64",
+      "platform": "darwin_arm64",
+      "published": false,
+      "race": false,
+      "module_directory": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/dunnelean-go-installed-bac3xmof/modules/github.com/casperfrome/!dunnelean/sdk/go@v0.1.0",
+      "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+      "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+      "offline": {
+        "offline": true,
+        "pid": 7083,
+        "reopened": true,
+        "state_store_id": "13ed8ac6-244b-46c3-9c51-07e5a594cf11",
+        "version": "0.1.0"
+      },
+      "result": "passed"
+    },
+    {
+      "module": "github.com/casperfrome/Dunnelean/sdk/go",
+      "version": "v0.1.0",
+      "go": "go version go1.27.1 darwin/arm64",
+      "platform": "darwin_arm64",
+      "published": false,
+      "race": false,
+      "module_directory": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/dunnelean-go-installed-hklaxehh/modules/github.com/casperfrome/!dunnelean/sdk/go@v0.1.0",
+      "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+      "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+      "offline": {
+        "offline": true,
+        "pid": 4654,
+        "reopened": true,
+        "state_store_id": "1df0e119-5c21-40b5-8831-da9f7d194d8e",
+        "version": "0.1.0"
+      },
+      "result": "passed"
+    },
+    {
+      "module": "github.com/casperfrome/Dunnelean/sdk/go",
+      "version": "v0.1.0",
+      "go": "go version go1.25.14 linux/amd64",
+      "platform": "linux_amd64",
+      "published": false,
+      "race": false,
+      "module_directory": "/tmp/dunnelean-go-installed-mfydequm/modules/github.com/casperfrome/!dunnelean/sdk/go@v0.1.0",
+      "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+      "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+      "offline": {
+        "offline": true,
+        "pid": 5797,
+        "reopened": true,
+        "state_store_id": "d754750b-fe6e-4b58-885d-a3e52664f46d",
+        "version": "0.1.0"
+      },
+      "result": "passed"
+    },
+    {
+      "module": "github.com/casperfrome/Dunnelean/sdk/go",
+      "version": "v0.1.0",
+      "go": "go version go1.26.8 linux/amd64",
+      "platform": "linux_amd64",
+      "published": false,
+      "race": false,
+      "module_directory": "/tmp/dunnelean-go-installed-b2m3jnsq/modules/github.com/casperfrome/!dunnelean/sdk/go@v0.1.0",
+      "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+      "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+      "offline": {
+        "offline": true,
+        "pid": 5702,
+        "reopened": true,
+        "state_store_id": "3865661f-d301-44e5-afe6-69f1ca0c16af",
+        "version": "0.1.0"
+      },
+      "result": "passed"
+    },
+    {
+      "module": "github.com/casperfrome/Dunnelean/sdk/go",
+      "version": "v0.1.0",
+      "go": "go version go1.27.1 linux/amd64",
+      "platform": "linux_amd64",
+      "published": false,
+      "race": false,
+      "module_directory": "/tmp/dunnelean-go-installed-lagwu46q/modules/github.com/casperfrome/!dunnelean/sdk/go@v0.1.0",
+      "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+      "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+      "offline": {
+        "offline": true,
+        "pid": 6006,
+        "reopened": true,
+        "state_store_id": "a0ba9e0b-0484-44b3-b90a-ac3d13a7b0e4",
+        "version": "0.1.0"
+      },
+      "result": "passed"
+    },
+    {
+      "module": "github.com/casperfrome/Dunnelean/sdk/go",
+      "version": "v0.1.0",
+      "go": "go version go1.25.14 windows/amd64",
+      "platform": "windows_amd64",
+      "published": false,
+      "race": false,
+      "module_directory": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\dunnelean-go-installed-9eqqz_f5\\modules\\github.com\\casperfrome\\!dunnelean\\sdk\\go@v0.1.0",
+      "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+      "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+      "offline": {
+        "offline": true,
+        "pid": 6236,
+        "reopened": true,
+        "state_store_id": "1297aea7-bdc6-4b1c-8dbd-5336a69f9062",
+        "version": "0.1.0"
+      },
+      "result": "passed"
+    },
+    {
+      "module": "github.com/casperfrome/Dunnelean/sdk/go",
+      "version": "v0.1.0",
+      "go": "go version go1.26.8 windows/amd64",
+      "platform": "windows_amd64",
+      "published": false,
+      "race": false,
+      "module_directory": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\dunnelean-go-installed-kzgjha_v\\modules\\github.com\\casperfrome\\!dunnelean\\sdk\\go@v0.1.0",
+      "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+      "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+      "offline": {
+        "offline": true,
+        "pid": 5704,
+        "reopened": true,
+        "state_store_id": "9cf24edb-79ea-4b9a-82d5-7031f8f909d3",
+        "version": "0.1.0"
+      },
+      "result": "passed"
+    },
+    {
+      "module": "github.com/casperfrome/Dunnelean/sdk/go",
+      "version": "v0.1.0",
+      "go": "go version go1.27.1 windows/amd64",
+      "platform": "windows_amd64",
+      "published": false,
+      "race": false,
+      "module_directory": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\dunnelean-go-installed-aa_g982w\\modules\\github.com\\casperfrome\\!dunnelean\\sdk\\go@v0.1.0",
+      "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+      "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+      "offline": {
+        "offline": true,
+        "pid": 7532,
+        "reopened": true,
+        "state_store_id": "9a95f427-6ed4-4c36-9728-4c4bab9e382c",
+        "version": "0.1.0"
+      },
+      "result": "passed"
+    },
+    {
+      "module": "github.com/casperfrome/Dunnelean/sdk/go",
+      "version": "v0.1.0",
+      "go": "go version go1.27.1 linux/amd64",
+      "platform": "linux_amd64",
+      "published": false,
+      "race": true,
+      "module_directory": "/tmp/dunnelean-go-installed-e51jrh88/modules/github.com/casperfrome/!dunnelean/sdk/go@v0.1.0",
+      "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+      "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+      "offline": {
+        "offline": true,
+        "pid": 7303,
+        "reopened": true,
+        "state_store_id": "72253db4-a3a4-49d0-9ef3-04351b9953bb",
+        "version": "0.1.0"
+      },
+      "result": "passed"
+    }
+  ]
+}

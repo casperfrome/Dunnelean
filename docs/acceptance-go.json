@@ -1,0 +1,87 @@
+{
+  "package_version": "0.1.0",
+  "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+  "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+  "ci_asset_database": {
+    "package_version": "0.1.0",
+    "go": "go version go1.27.1 windows/amd64",
+    "cgo_enabled": false,
+    "module": {
+      "Path": "github.com/casperfrome/Dunnelean/sdk/go",
+      "Version": "v0.1.0",
+      "Replace": {
+        "Path": "D:/AllForCareer/Dunnelean/sdk/go",
+        "Dir": "D:/AllForCareer/Dunnelean/sdk/go",
+        "GoMod": "D:\\AllForCareer\\Dunnelean\\sdk\\go\\go.mod",
+        "GoVersion": "1.25.0"
+      },
+      "Dir": "D:/AllForCareer/Dunnelean/sdk/go",
+      "GoMod": "D:\\AllForCareer\\Dunnelean\\sdk\\go\\go.mod",
+      "GoVersion": "1.25.0"
+    },
+    "cases": [
+      {
+        "case": "go_sync_mysql_to_doris_exact_types",
+        "state": "SUCCEEDED",
+        "rows_committed": 47,
+        "commit_unknown": false,
+        "run_id": "039eee28-4d5b-4a6c-a6df-a9be1cedabd9",
+        "seconds": 0.563
+      },
+      {
+        "case": "go_goroutine_doris_to_mysql_exact_roundtrip",
+        "state": "SUCCEEDED",
+        "rows_committed": 47,
+        "commit_unknown": false,
+        "run_id": "fa506922-519a-4442-881d-39cbd23e3a75",
+        "seconds": 0.625,
+        "heartbeat_ticks": 95
+      },
+      {
+        "case": "go_mysql_commit_response_loss_is_not_replayed",
+        "state": "FAILED",
+        "rows_committed": 0,
+        "commit_unknown": true,
+        "run_id": "3c3560bb-c3d5-44f1-8bf4-b1c998d091f4",
+        "seconds": 0.219,
+        "commits": 1
+      },
+      {
+        "case": "go_context_cancellation_requires_explicit_run_cancel",
+        "state": "CANCELLED",
+        "rows_committed": 0,
+        "commit_unknown": false,
+        "run_id": "05fa0c1c-a411-4020-a374-ede7f68217a8",
+        "seconds": 0.062
+      },
+      {
+        "case": "go_close_timeout_retains_real_commit_receipt_and_retries",
+        "state": "CANCELLED",
+        "rows_committed": 2,
+        "commit_unknown": false,
+        "run_id": "ad3b4863-aa9a-4f98-9fb5-945e6a4a4f67",
+        "seconds": 0.36,
+        "puts": 1
+      }
+    ]
+  },
+  "ci_asset_installed_module": {
+    "module": "github.com/casperfrome/Dunnelean/sdk/go",
+    "version": "v0.1.0",
+    "go": "go version go1.27.1 windows/amd64",
+    "platform": "windows_amd64",
+    "published": false,
+    "race": false,
+    "module_directory": "C:\\Users\\zevro\\AppData\\Local\\Temp\\dunnelean-go-installed-9jxgouoi\\modules\\github.com\\casperfrome\\!dunnelean\\sdk\\go@v0.1.0",
+    "native_source_commit": "53ae345a452aac583ec4a524a09cc3a8f0e49d53",
+    "native_source_hash": "c3a1079e1fd0a35c6a70685e9206eb1fd17b0fadd20cd5a334a84930571b6e87",
+    "offline": {
+      "offline": true,
+      "pid": 23256,
+      "reopened": true,
+      "state_store_id": "97b414c6-34c2-4e5f-9bd1-5a494f92718c",
+      "version": "0.1.0"
+    },
+    "result": "passed"
+  }
+}
