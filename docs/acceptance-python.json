@@ -8,16 +8,16 @@
       "state": "SUCCEEDED",
       "rows_committed": 47,
       "commit_unknown": false,
-      "run_id": "e5596cf7-2a1c-4571-8331-81c59f5d4189",
-      "seconds": 0.609
+      "run_id": "c6409d47-7566-496b-b736-4429b1d53b45",
+      "seconds": 0.562
     },
     {
       "case": "cancel_waits_for_real_doris_commit_receipt",
       "state": "CANCELLED",
       "rows_committed": 2,
       "commit_unknown": false,
-      "run_id": "28f4baec-f0b0-4782-8e94-ff9b19590733",
-      "seconds": 0.313,
+      "run_id": "9323fa7b-f550-487e-9d39-69ee661de9d0",
+      "seconds": 0.25,
       "puts": 1
     },
     {
@@ -25,8 +25,8 @@
       "state": "FAILED",
       "rows_committed": 0,
       "commit_unknown": true,
-      "run_id": "28a8bb2b-3733-497e-80b1-8bb849daf6fa",
-      "seconds": 0.203,
+      "run_id": "5fd31664-6d9b-40b6-afa5-bc548a6ca4bc",
+      "seconds": 0.172,
       "commits": 1
     },
     {
@@ -34,16 +34,16 @@
       "state": "SUCCEEDED",
       "rows_committed": 47,
       "commit_unknown": false,
-      "run_id": "b9086fc0-2183-43e2-9889-51281f07c926",
-      "seconds": 0.375
+      "run_id": "e02b93ee-c68c-4b28-87c1-8a1a70c833d2",
+      "seconds": 0.234
     },
     {
       "case": "async_waiter_cancellation_requires_explicit_run_cancel",
       "state": "CANCELLED",
       "rows_committed": 0,
       "commit_unknown": false,
-      "run_id": "ffeb0735-715d-4775-9b9e-51269f0c4c7b",
-      "seconds": 0.157
+      "run_id": "dceb71e3-2aff-43e1-b883-9264d3ece610",
+      "seconds": 0.047
     }
   ]
 }

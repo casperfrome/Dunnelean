@@ -209,7 +209,7 @@ except CloseTimeoutError:
 
 ### 已完成的本地实测
 
-2026-10-02，在 Windows x86_64 / CPython 3.10.11 上，从 sdist 重新构建并安装 release wheel，以仓库外工作目录和 `-I` 验证：30 项 pytest 全部通过，5 项真实 MySQL/Doris 验收全部通过。取消回归保留 Task、`CancelledError` traceback 和 Engine 强引用，确认打开、上下文进入及关闭的清理不依赖 GC；取消提交后可通过 request ID 找回运行。
+2026-10-02，在 Windows x86_64 / CPython 3.10.11 上，从 sdist 重新构建并安装 release wheel，以仓库外工作目录和 `-I` 验证：31 项 pytest 全部通过，5 项真实 MySQL/Doris 验收全部通过。取消回归保留 Task、`CancelledError` traceback 和 Engine 强引用，确认打开、上下文进入、构造期间取消关闭以及关闭的清理不依赖 GC；取消提交后可通过 request ID 找回运行。
 
 | 真实数据库场景 | 结果 |
 | --- | --- |

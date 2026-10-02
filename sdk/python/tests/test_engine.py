@@ -524,3 +524,59 @@ async def test_cancelled_context_entry_releases_store_with_engine_and_traceback_
         if reopened is not None:
             await asyncio.to_thread(reopened.close)
         await engine.close(timeout=5)
+
+
+@pytest.mark.asyncio
+async def test_cancelled_close_during_open_releases_store_with_all_references_retained(tmp_path, monkeypatch):
+    path = tmp_path / "state.sqlite"
+    started = threading.Event()
+    release = threading.Event()
+    constructed = []
+    retained_errors = []
+
+    def slow_constructor(*args, **kwargs):
+        opened = Engine(*args, **kwargs)
+        constructed.append(opened)
+        started.set()
+        assert release.wait(5), "Pending-open close barrier was not released"
+        return opened
+
+    monkeypatch.setattr(dunnelean, "Engine", slow_constructor)
+    engine = AsyncEngine(path)
+    entering = asyncio.create_task(engine.__aenter__())
+    closing = None
+    reopened = None
+    try:
+        assert await asyncio.to_thread(started.wait, 2)
+        closing = asyncio.create_task(engine.close(timeout=5))
+        deadline = time.monotonic() + 2
+        while not engine._abandoned:
+            assert time.monotonic() < deadline, "Close did not reach the pending constructor"
+            await asyncio.sleep(0.01)
+        assert engine._engine is None and not closing.done()
+        closing.cancel()
+        try:
+            await closing
+        except asyncio.CancelledError as error:
+            retained_errors.append(error)
+        else:
+            raise AssertionError("Pending-open closing waiter did not propagate cancellation")
+        release.set()
+        try:
+            await entering
+        except DunneleanError as error:
+            assert error.code == "ENGINE_CLOSED"
+            retained_errors.append(error)
+        else:
+            raise AssertionError("Context entry succeeded after concurrent close")
+        assert all(error.__traceback__ is not None for error in retained_errors)
+        # Keep the AsyncEngine, both Tasks, their exceptions and actual Engine alive.
+        reopened = await reopen_when_unlocked(path)
+        assert closing.cancelled() and entering.done() and constructed
+        assert all(error.__traceback__ is not None for error in retained_errors)
+    finally:
+        release.set()
+        if reopened is not None:
+            await asyncio.to_thread(reopened.close)
+        for opened in constructed:
+            await asyncio.to_thread(opened.close, timeout=5)

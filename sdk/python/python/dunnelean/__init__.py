@@ -254,6 +254,7 @@ class AsyncEngine:
             raise
         if self._abandoned:
             self._opening = None
+            engine._abandon()
             raise DunneleanError("ENGINE_CLOSED", "Async engine opening was cancelled")
         self._engine = engine
         self._opening = None
