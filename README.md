@@ -1,6 +1,6 @@
 # Dunnelean
 
-使用 Rust 和 Apache Arrow 编写的本地离线批量同步工具。支持 **MySQL → Doris、Doris → MySQL**，Python 可直接嵌入 Rust 核心，Java 通过 HTTP API 控制作业。
+使用 Rust 和 Apache Arrow 编写的本地离线批量同步工具。支持 **MySQL → Doris、Doris → MySQL**，Python 和 Go 可直接嵌入 Rust 核心，Java 通过 HTTP API 控制作业。
 
 ```text
 MySQL binary protocol → Arrow RecordBatch → Arrow IPC Stream → Doris Stream Load
@@ -108,6 +108,18 @@ with Engine("var/python-jobs.sqlite") as engine:
 ```
 
 `password_env` 由当前 Python 进程读取；目标表需预先存在。`AsyncEngine` 支持 asyncio，返回普通 dict/list，保留按批次提交、幂等和可靠取消语义。`with` / `async with` 退出时取消活动任务并等待收尾。安装、完整接口、关闭超时和四平台 CI 见 [Python 库文档](docs/python-sdk.md)，示例在 [examples/python](examples/python)。
+
+### Go 1.25+ 原生库
+
+Go 库在当前进程中运行 Rust 引擎，包内包含 Windows/Linux amd64、macOS Intel/Apple Silicon 的预编译原生库。用户只需要 Go，支持 `CGO_ENABLED=0`，运行时不下载引擎：
+
+```bash
+go get github.com/casperfrome/Dunnelean/sdk/go@v0.1.0
+```
+
+使用 `dunnelean.Open(ctx, statePath)` 打开独占的 SQLite 状态库，通过 JSON 配置提交或直接 `Run`，使用 `Close` 等待收尾。原生库首次使用时自动释放到用户缓存目录，可通过 `WithNativeCacheDir` 指定目录；数据库密码环境变量及证书由当前 Go 进程读取。
+
+完整接口、goroutine 示例、取消语义、平台要求与版本分发见 [Go 原生库文档](docs/go-sdk.md)。
 
 ### Java 17+ 类型化 SDK
 

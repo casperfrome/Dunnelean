@@ -1,16 +1,8 @@
 use dunnelean::{
-    config::{RunSpec, ServerConfig},
-    engine::{self, Engine},
     error::{Error, Result},
-    store::Store,
+    native_host::{self, NativeHost},
 };
 use pyo3::{create_exception, exceptions::PyException, prelude::*};
-use serde::Serialize;
-use std::{
-    sync::{Arc, Condvar, Mutex, TryLockError},
-    time::{Duration, Instant},
-};
-use tokio::runtime::{Builder, Runtime};
 
 create_exception!(_native, NativeError, PyException);
 
@@ -26,241 +18,18 @@ fn native_error(error: Error) -> PyErr {
     )
 }
 
-fn json(value: &impl Serialize) -> Result<String> {
-    serde_json::to_string(value).map_err(Into::into)
-}
-
-fn lock_error() -> Error {
-    Error::new("ENGINE_INTERNAL", "Engine lifecycle lock is poisoned")
-}
-
-struct Session {
-    // The runtime is explicitly destroyed before the engine releases its store.
-    runtime: Option<Runtime>,
-    engine: Engine,
-}
-
-impl Session {
-    fn runtime(&self) -> &Runtime {
-        // Only dispose takes the runtime, after the session has become exclusive.
-        self.runtime.as_ref().expect("live session owns a runtime")
-    }
-
-    fn dispose(mut self, budget: Duration) {
-        if let Some(runtime) = self.runtime.take() {
-            runtime.shutdown_timeout(budget);
-        }
-    }
-}
-
-impl Drop for Session {
-    fn drop(&mut self) {
-        // Even construction failures must not run Tokio's unbounded Drop wait.
-        if let Some(runtime) = self.runtime.take() {
-            runtime.shutdown_background();
-        }
-    }
-}
-
-#[derive(Clone, Copy, PartialEq)]
-enum Phase {
-    Open,
-    Closing,
-    Finalizing,
-    Closed,
-}
-
-struct Lifecycle {
-    phase: Phase,
-    session: Option<Arc<Session>>,
-    leases: usize,
-}
-
-struct Shared {
-    lifecycle: Mutex<Lifecycle>,
-    changed: Condvar,
-    closer: Mutex<()>,
-}
-
-#[derive(Clone, Copy)]
-enum Access {
-    Open,
-    Observe,
-}
-
-struct Lease {
-    shared: Arc<Shared>,
-    session: Option<Arc<Session>>,
-}
-
-impl Lease {
-    fn session(&self) -> &Session {
-        self.session.as_deref().expect("live lease owns a session")
-    }
-}
-
-impl Drop for Lease {
-    fn drop(&mut self) {
-        // Drop the borrowed session before publishing leases == 0, so close can
-        // acquire exclusive runtime ownership without an Arc reference race.
-        drop(self.session.take());
-        let mut lifecycle = self
-            .shared
-            .lifecycle
-            .lock()
-            .unwrap_or_else(|poisoned| poisoned.into_inner());
-        lifecycle.leases -= 1;
-        self.shared.changed.notify_all();
-    }
-}
-
-impl Shared {
-    fn acquire(self: &Arc<Self>, access: Access) -> Result<Lease> {
-        let mut lifecycle = self.lifecycle.lock().map_err(|_| lock_error())?;
-        match lifecycle.phase {
-            Phase::Closed => {
-                return Err(Error::new("ENGINE_CLOSED", "Engine is closed"));
-            }
-            Phase::Closing if matches!(access, Access::Open) => {
-                return Err(Error::new("ENGINE_CLOSING", "Engine is closing"));
-            }
-            Phase::Finalizing => {
-                return Err(Error::new("ENGINE_CLOSING", "Engine is closing"));
-            }
-            _ => {}
-        }
-        let session = lifecycle.session.as_ref().ok_or_else(lock_error)?.clone();
-        lifecycle.leases += 1;
-        Ok(Lease {
-            shared: self.clone(),
-            session: Some(session),
-        })
-    }
-
-    fn close(&self, timeout_ms: u64) -> Result<bool> {
-        let started = Instant::now();
-        let budget = Duration::from_millis(timeout_ms);
-        // Only close calls serialize here. Regular methods retain access to
-        // receipts/cancellation while a different thread waits for shutdown.
-        let _closer = loop {
-            match self.closer.try_lock() {
-                Ok(guard) => break guard,
-                Err(TryLockError::Poisoned(_)) => return Err(lock_error()),
-                Err(TryLockError::WouldBlock) => {
-                    let remaining = budget.saturating_sub(started.elapsed());
-                    if remaining.is_zero() {
-                        return Ok(false);
-                    }
-                    std::thread::sleep(remaining.min(Duration::from_millis(5)));
-                }
-            }
-        };
-        let session = {
-            let mut lifecycle = self.lifecycle.lock().map_err(|_| lock_error())?;
-            if lifecycle.phase == Phase::Closed {
-                return Ok(true);
-            }
-            lifecycle.phase = Phase::Closing;
-            lifecycle.session.as_ref().ok_or_else(lock_error)?.clone()
-        };
-        let remaining_ms = budget
-            .saturating_sub(started.elapsed())
-            .as_millis()
-            .min(u64::MAX as u128) as u64;
-        if !session
-            .runtime()
-            .block_on(session.engine.shutdown_and_wait(remaining_ms))
-        {
-            return Ok(false);
-        }
-        let mut lifecycle = self.lifecycle.lock().map_err(|_| lock_error())?;
-        while lifecycle.leases > 0 || !session.engine.store.is_exclusively_owned() {
-            let remaining = budget.saturating_sub(started.elapsed());
-            if remaining.is_zero() {
-                return Ok(false);
-            }
-            let (next, _) = self
-                .changed
-                // Store clones held by aborted Rust child tasks do not notify
-                // this condition variable when dropped, so also poll briefly.
-                .wait_timeout(lifecycle, remaining.min(Duration::from_millis(10)))
-                .map_err(|_| lock_error())?;
-            lifecycle = next;
-        }
-        let owner = lifecycle.session.take().ok_or_else(lock_error)?;
-        lifecycle.phase = Phase::Finalizing;
-        drop(lifecycle);
-        drop(owner);
-        match Arc::try_unwrap(session) {
-            Ok(session) => {
-                session.dispose(budget.saturating_sub(started.elapsed()));
-                self.lifecycle.lock().map_err(|_| lock_error())?.phase = Phase::Closed;
-                Ok(true)
-            }
-            Err(session) => {
-                // Keep resources owned if an unexpected outstanding reference
-                // exists, rather than reporting a closure that did not happen.
-                let mut lifecycle = self.lifecycle.lock().map_err(|_| lock_error())?;
-                lifecycle.session = Some(session);
-                lifecycle.phase = Phase::Closing;
-                Ok(false)
-            }
-        }
-    }
-}
-
-fn spawn_cleanup(shared: &Arc<Shared>) -> Result<()> {
-    let cleanup = shared.clone();
-    std::thread::Builder::new()
-        .name("dunnelean-cleanup".into())
-        .spawn(move || {
-            loop {
-                match cleanup.close(60_000) {
-                    Ok(true) => return,
-                    Ok(false) => {}
-                    Err(_) => {
-                        // A poisoned lifecycle cannot safely be drained.
-                        // Leaking is safer than blocking Python finalization.
-                        std::mem::forget(cleanup);
-                        return;
-                    }
-                }
-            }
-        })
-        .map(|_| ())
-        .map_err(Into::into)
-}
-
 #[pyclass(frozen, module = "dunnelean._native")]
 struct NativeEngine {
-    creator_pid: u32,
-    shared: Option<Arc<Shared>>,
+    host: NativeHost,
 }
 
 impl NativeEngine {
-    fn shared(&self) -> Result<&Arc<Shared>> {
-        // Check before any lock, including after fork when only one thread
-        // survives and inherited runtime/lifecycle locks may remain held.
-        if self.creator_pid != std::process::id() {
-            return Err(Error::new(
-                "ENGINE_FORKED",
-                "An engine cannot be used in a forked process; create a new engine there",
-            ));
-        }
-        self.shared.as_ref().ok_or_else(lock_error)
-    }
-
     fn operate<T: Send>(
         &self,
         py: Python<'_>,
-        access: Access,
-        operation: impl FnOnce(&Session) -> Result<T> + Send,
+        operation: impl FnOnce(&NativeHost) -> Result<T> + Send,
     ) -> PyResult<T> {
-        py.detach(|| {
-            let lease = self.shared()?.acquire(access)?;
-            operation(lease.session())
-        })
-        .map_err(native_error)
+        py.detach(|| operation(&self.host)).map_err(native_error)
     }
 }
 
@@ -274,152 +43,52 @@ impl NativeEngine {
         max_running: usize,
         max_queued: usize,
     ) -> PyResult<Self> {
-        py.detach(move || {
-            let config = ServerConfig {
-                state_path: state_path.clone(),
-                max_running,
-                max_queued,
-                ..ServerConfig::default()
-            };
-            if state_path.is_empty() || state_path == ":memory:" {
-                return Err(Error::config(
-                    "state_path must identify a persistent SQLite file",
-                ));
-            }
-            if max_running == 0 || max_running > 64 || max_queued > 4096 {
-                return Err(Error::config(
-                    "max_running must be 1..64 and max_queued must be 0..4096",
-                ));
-            }
-            let store = Store::open(&state_path)?;
-            let engine = Engine::new(store, &config)?;
-            let worker_threads = std::thread::available_parallelism()
-                .map(|available| available.get().min(4))
-                .unwrap_or(1);
-            let runtime = Builder::new_multi_thread()
-                .worker_threads(worker_threads)
-                .thread_name("dunnelean-worker")
-                .enable_all()
-                .build()?;
-            Ok(Self {
-                creator_pid: std::process::id(),
-                shared: Some(Arc::new(Shared {
-                    lifecycle: Mutex::new(Lifecycle {
-                        phase: Phase::Open,
-                        session: Some(Arc::new(Session {
-                            runtime: Some(runtime),
-                            engine,
-                        })),
-                        leases: 0,
-                    }),
-                    changed: Condvar::new(),
-                    closer: Mutex::new(()),
-                })),
-            })
-        })
-        .map_err(native_error)
+        py.detach(|| NativeHost::open(state_path, max_running, max_queued))
+            .map(|host| Self { host })
+            .map_err(native_error)
     }
 
     fn validate(&self, py: Python<'_>, spec_json: String) -> PyResult<String> {
-        self.operate(py, Access::Open, move |session| {
-            let spec: RunSpec = serde_json::from_str(&spec_json)?;
-            let validated = session.runtime().block_on(engine::validate(&spec))?;
-            json(&engine::validation_json(&validated))
-        })
+        self.operate(py, |host| host.validate(&spec_json))
     }
-
     fn submit(&self, py: Python<'_>, spec_json: String) -> PyResult<String> {
-        self.operate(py, Access::Open, move |session| {
-            let spec: RunSpec = serde_json::from_str(&spec_json)?;
-            json(&session.runtime().block_on(session.engine.submit(spec))?)
-        })
+        self.operate(py, |host| host.submit(&spec_json))
     }
-
     fn get_run(&self, py: Python<'_>, id: String) -> PyResult<String> {
-        self.operate(py, Access::Observe, move |session| {
-            json(&session.engine.store.get(&id)?)
-        })
+        self.operate(py, |host| host.get_run(&id))
     }
-
     fn cancel_run(&self, py: Python<'_>, id: String) -> PyResult<String> {
-        self.operate(py, Access::Observe, move |session| {
-            json(&session.runtime().block_on(session.engine.cancel(&id))?)
-        })
+        self.operate(py, |host| host.cancel_run(&id))
     }
-
     fn get_request(&self, py: Python<'_>, id: String) -> PyResult<String> {
-        self.operate(py, Access::Observe, move |session| {
-            json(&session.engine.store.request(&id)?)
-        })
+        self.operate(py, |host| host.get_request(&id))
     }
-
     fn cancel_request(&self, py: Python<'_>, id: String) -> PyResult<String> {
-        self.operate(py, Access::Observe, move |session| {
-            json(
-                &session
-                    .runtime()
-                    .block_on(session.engine.cancel_request(&id))?,
-            )
-        })
+        self.operate(py, |host| host.cancel_request(&id))
     }
-
     fn list_runs(&self, py: Python<'_>, limit: usize, offset: usize) -> PyResult<String> {
-        self.operate(py, Access::Observe, move |session| {
-            json(&session.engine.store.list(limit, offset)?)
-        })
+        self.operate(py, |host| host.list_runs(limit, offset))
     }
-
     fn list_batches(&self, py: Python<'_>, id: String) -> PyResult<String> {
-        self.operate(py, Access::Observe, move |session| {
-            session.engine.store.get(&id)?;
-            json(&session.engine.store.batches(&id)?)
-        })
+        self.operate(py, |host| host.list_batches(&id))
     }
-
     fn state_store_id(&self, py: Python<'_>) -> PyResult<String> {
-        self.operate(py, Access::Observe, |session| {
-            session.engine.store.state_store_id()
-        })
+        self.operate(py, NativeHost::state_store_id)
     }
-
     fn ready(&self, py: Python<'_>) -> PyResult<()> {
-        self.operate(py, Access::Observe, |session| session.engine.ready())
+        self.operate(py, NativeHost::ready)
     }
-
     fn close(&self, py: Python<'_>, timeout_ms: u64) -> PyResult<bool> {
-        py.detach(|| self.shared()?.close(timeout_ms))
-            .map_err(native_error)
+        self.operate(py, |host| host.close(timeout_ms))
     }
-
-    /// Start cleanup even when an abandoned Python task still retains this object.
     fn abandon(&self, py: Python<'_>) -> PyResult<()> {
-        py.detach(|| spawn_cleanup(self.shared()?))
-            .map_err(native_error)
-    }
-}
-
-impl Drop for NativeEngine {
-    fn drop(&mut self) {
-        let Some(shared) = self.shared.take() else {
-            return;
-        };
-        if self.creator_pid != std::process::id() {
-            // Never inspect inherited locks or destroy inherited worker threads.
-            std::mem::forget(shared);
-            return;
-        }
-        if spawn_cleanup(&shared).is_err() {
-            // Keep an owner until spawn succeeds: the failed closure is dropped
-            // by std::thread and must not drop a live runtime here.
-            std::mem::forget(shared);
-        }
+        self.operate(py, NativeHost::abandon)
     }
 }
 
 #[pyfunction]
 fn connectors(py: Python<'_>) -> PyResult<String> {
-    py.detach(|| json(&dunnelean::api::connector_info()))
-        .map_err(native_error)
+    py.detach(native_host::connectors).map_err(native_error)
 }
 
 #[pymodule(gil_used = true)]
@@ -429,190 +98,4 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add("__version__", env!("CARGO_PKG_VERSION"))?;
     module.add_function(wrap_pyfunction!(connectors, module)?)?;
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn shared(path: &std::path::Path) -> Arc<Shared> {
-        let engine = Engine::new(Store::open(path).unwrap(), &ServerConfig::default()).unwrap();
-        let runtime = Builder::new_multi_thread()
-            .worker_threads(1)
-            .enable_all()
-            .build()
-            .unwrap();
-        Arc::new(Shared {
-            lifecycle: Mutex::new(Lifecycle {
-                phase: Phase::Open,
-                session: Some(Arc::new(Session {
-                    runtime: Some(runtime),
-                    engine,
-                })),
-                leases: 0,
-            }),
-            changed: Condvar::new(),
-            closer: Mutex::new(()),
-        })
-    }
-
-    #[test]
-    fn close_timeout_keeps_store_owned_and_allows_a_retry() {
-        let temp = tempfile::tempdir().unwrap();
-        let path = temp.path().join("state.sqlite");
-        let shared = shared(&path);
-        let lease = shared.acquire(Access::Open).unwrap();
-        assert!(!shared.close(0).unwrap());
-        assert!(Store::open(&path).is_err());
-        assert!(matches!(
-            shared.acquire(Access::Open),
-            Err(error) if error.code == "ENGINE_CLOSING"
-        ));
-        let receipt_access = shared.acquire(Access::Observe).unwrap();
-        assert!(
-            !receipt_access
-                .session()
-                .engine
-                .store
-                .state_store_id()
-                .unwrap()
-                .is_empty()
-        );
-        drop(receipt_access);
-        drop(lease);
-        assert!(shared.close(1000).unwrap());
-        assert!(shared.close(0).unwrap());
-        assert!(matches!(
-            shared.acquire(Access::Observe),
-            Err(error) if error.code == "ENGINE_CLOSED"
-        ));
-        assert!(Store::open(&path).is_ok());
-    }
-
-    #[test]
-    fn close_waits_for_a_cancelled_worker_to_release_its_store_clone() {
-        let temp = tempfile::tempdir().unwrap();
-        let path = temp.path().join("state.sqlite");
-        let shared = shared(&path);
-        // An aborted child future can retain this owner until its next poll,
-        // even after the supervising run and every Python lease have drained.
-        let worker_store = {
-            let lease = shared.acquire(Access::Observe).unwrap();
-            lease.session().engine.store.clone()
-        };
-        assert!(!shared.close(0).unwrap());
-        assert!(Store::open(&path).is_err());
-        assert!(matches!(
-            shared.acquire(Access::Open),
-            Err(error) if error.code == "ENGINE_CLOSING"
-        ));
-        drop(worker_store);
-        assert!(shared.close(1000).unwrap());
-        assert!(Store::open(&path).is_ok());
-    }
-
-    #[test]
-    fn close_polls_for_store_owners_that_do_not_notify_the_lifecycle() {
-        let temp = tempfile::tempdir().unwrap();
-        let path = temp.path().join("state.sqlite");
-        let shared = shared(&path);
-        let worker_store = {
-            let lease = shared.acquire(Access::Observe).unwrap();
-            lease.session().engine.store.clone()
-        };
-        let worker = std::thread::spawn(move || {
-            std::thread::sleep(Duration::from_millis(5));
-            drop(worker_store);
-        });
-        assert!(shared.close(1000).unwrap());
-        worker.join().unwrap();
-        assert!(Store::open(&path).is_ok());
-    }
-
-    #[test]
-    fn concurrent_close_waits_for_leases_and_releases_the_store() {
-        let temp = tempfile::tempdir().unwrap();
-        let path = temp.path().join("state.sqlite");
-        let shared = shared(&path);
-        let lease = shared.acquire(Access::Observe).unwrap();
-        let closer = {
-            let shared = shared.clone();
-            std::thread::spawn(move || shared.close(1000).unwrap())
-        };
-        let started = Instant::now();
-        while shared.lifecycle.lock().unwrap().phase != Phase::Closing {
-            assert!(started.elapsed() < Duration::from_secs(1));
-            std::thread::yield_now();
-        }
-        assert!(!shared.close(0).unwrap());
-        drop(lease);
-        assert!(closer.join().unwrap());
-        assert!(Store::open(&path).is_ok());
-    }
-
-    #[test]
-    fn destructor_drains_on_a_background_thread() {
-        let temp = tempfile::tempdir().unwrap();
-        let path = temp.path().join("state.sqlite");
-        let shared = shared(&path);
-        let engine = NativeEngine {
-            creator_pid: std::process::id(),
-            shared: Some(shared.clone()),
-        };
-        let lease = shared.acquire(Access::Observe).unwrap();
-        drop(engine);
-        assert!(Store::open(&path).is_err());
-        drop(lease);
-        let started = Instant::now();
-        loop {
-            if Store::open(&path).is_ok() {
-                break;
-            }
-            assert!(started.elapsed() < Duration::from_secs(2));
-            std::thread::sleep(Duration::from_millis(5));
-        }
-    }
-
-    #[test]
-    fn abandonment_drains_while_the_native_object_is_still_retained() {
-        let temp = tempfile::tempdir().unwrap();
-        let path = temp.path().join("state.sqlite");
-        let shared = shared(&path);
-        let engine = NativeEngine {
-            creator_pid: std::process::id(),
-            shared: Some(shared.clone()),
-        };
-        let lease = shared.acquire(Access::Observe).unwrap();
-        spawn_cleanup(engine.shared().unwrap()).unwrap();
-        assert!(Store::open(&path).is_err());
-        drop(lease);
-        let started = Instant::now();
-        loop {
-            if Store::open(&path).is_ok() {
-                break;
-            }
-            assert!(started.elapsed() < Duration::from_secs(2));
-            std::thread::sleep(Duration::from_millis(5));
-        }
-        assert!(engine.shared().unwrap().close(0).unwrap());
-        assert!(matches!(
-            engine.shared().unwrap().acquire(Access::Observe),
-            Err(error) if error.code == "ENGINE_CLOSED"
-        ));
-    }
-
-    #[test]
-    fn pid_guard_rejects_access_before_touching_locks() {
-        let temp = tempfile::tempdir().unwrap();
-        let shared = shared(&temp.path().join("state.sqlite"));
-        let mut engine = NativeEngine {
-            creator_pid: std::process::id().wrapping_add(1),
-            shared: Some(shared.clone()),
-        };
-        let lifecycle = shared.lifecycle.lock().unwrap();
-        assert!(matches!(engine.shared(), Err(error) if error.code == "ENGINE_FORKED"));
-        drop(lifecycle);
-        engine.creator_pid = std::process::id();
-        assert!(shared.close(1000).unwrap());
-    }
 }

@@ -1,0 +1,165 @@
+name: Go library
+
+on:
+  push:
+    branches: [main]
+    tags: ["sdk/go/v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: go-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_BUILD_JOBS: "2"
+  PYTHONUTF8: "1"
+
+jobs:
+  native:
+    name: Native (${{ matrix.platform.name }})
+    runs-on: ${{ matrix.platform.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: windows_amd64
+            runner: windows-2022
+            target: x86_64-pc-windows-msvc
+          - name: linux_amd64
+            runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+          - name: darwin_amd64
+            runner: macos-15-intel
+            target: x86_64-apple-darwin
+          - name: darwin_arm64
+            runner: macos-15
+            target: aarch64-apple-darwin
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+      - name: Build on manylinux2014 (glibc 2.17)
+        if: matrix.platform.name == 'linux_amd64'
+        shell: bash
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/work" -w /work \
+            -e CARGO_BUILD_JOBS -e PYTHONUTF8 \
+            quay.io/pypa/manylinux2014_x86_64 \
+            bash -ec 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.1
+            export PATH="$HOME/.cargo/bin:$PATH"
+            /opt/python/cp310-cp310/bin/python scripts/build-go-native.py build --target x86_64-unknown-linux-gnu --out dist/go-native'
+      - name: Install pinned Rust toolchain
+        if: matrix.platform.name != 'linux_amd64'
+        run: rustup toolchain install 1.98.1 --profile minimal
+      - name: Build and verify native dependencies
+        if: matrix.platform.name != 'linux_amd64'
+        run: python scripts/build-go-native.py build --target ${{ matrix.platform.target }} --out dist/go-native
+      - uses: actions/upload-artifact@v4
+        with:
+          name: go-native-${{ matrix.platform.name }}
+          path: dist/go-native/*
+          if-no-files-found: error
+          retention-days: 30
+
+  installed:
+    name: Installed module (${{ matrix.platform.name }}, Go ${{ matrix.go }})
+    needs: native
+    runs-on: ${{ matrix.platform.runner }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["1.25.x", "1.26.x", "1.27.x"]
+        platform:
+          - name: windows_amd64
+            runner: windows-2022
+          - name: linux_amd64
+            runner: ubuntu-22.04
+          - name: darwin_amd64
+            runner: macos-15-intel
+          - name: darwin_arm64
+            runner: macos-15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go }}
+          cache: false
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: go-native-*
+          path: dist/go-native
+      - name: Prepare bootstrap assets or verify committed release assets
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          import sys
+
+          manifest = Path("sdk/go/internal/nativeassets/manifest.json")
+          if manifest.exists():
+              # Never silently replace committed release assets with a fresh build.
+              args = ["verify", "--sdk", "sdk/go"]
+          else:
+              args = ["assemble", "--artifacts", "dist/go-native", "--sdk", "sdk/go"]
+          subprocess.run([sys.executable, "scripts/build-go-native.py", *args], check=True)
+      - name: Test installed module and a fresh offline CGO_ENABLED=0 consumer
+        run: python scripts/verify-go-package.py --report dist/go-installed-${{ matrix.platform.name }}-${{ matrix.go }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: go-installed-${{ matrix.platform.name }}-${{ matrix.go }}
+          path: dist/go-installed-*.json
+          if-no-files-found: error
+          retention-days: 30
+
+  race:
+    name: Go race detector (Linux amd64)
+    needs: native
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.27.x"
+          cache: false
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: go-native-*
+          path: dist/go-native
+      - name: Prepare verified assets
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          import sys
+
+          args = (["verify"] if Path("sdk/go/internal/nativeassets/manifest.json").exists()
+                  else ["assemble", "--artifacts", "dist/go-native"])
+          subprocess.run([sys.executable, "scripts/build-go-native.py", *args], check=True)
+      - name: Check Go-side concurrency with the race detector
+        run: python scripts/verify-go-package.py --race --report dist/go-race.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: go-race-linux-amd64
+          path: dist/go-race.json
+          if-no-files-found: error
+          retention-days: 30

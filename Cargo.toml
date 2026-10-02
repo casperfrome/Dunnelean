@@ -13,7 +13,7 @@ include = [
 ]
 
 [workspace]
-members = ["sdk/python"]
+members = ["sdk/python", "sdk/native"]
 default-members = ["."]
 resolver = "3"
 

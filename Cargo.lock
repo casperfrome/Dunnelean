@@ -761,6 +761,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "dunnelean-native"
+version = "0.1.0"
+dependencies = [
+ "dunnelean",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "dunnelean-python"
 version = "0.1.0"
 dependencies = [

@@ -35,6 +35,9 @@ module-name = "dunnelean._native"
 bindings = "pyo3"
 exclude = ["**/__pycache__/**", "**/*.py[cod]"]
 include = [
+    {path = "sdk/native/Cargo.toml", format = "sdist"},
+    {path = "sdk/native/src/**/*.rs", format = "sdist"},
+    {path = "sdk/native/include/*.h", format = "sdist"},
     {path = "rust-toolchain.toml", format = "sdist"},
     {path = "sdk/python/tests/**/*", format = "sdist"},
     {path = "sdk/java/src/test/resources/*.json", format = "sdist"},
